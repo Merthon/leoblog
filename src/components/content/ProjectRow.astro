@@ -1,0 +1,128 @@
+---
+import Icon from '../ui/Icon.astro';
+import { formatDate, isCurrentProject, projectStatusLabels, type ProjectEntry } from '../../lib/content';
+
+interface Props { entry: ProjectEntry }
+const { entry } = Astro.props;
+const current = isCurrentProject(entry.data.status);
+---
+
+<a class="project-row" href={`/projects/${entry.id}/`}>
+  <h3>{entry.data.title}</h3>
+  <p>{entry.data.description}</p>
+  <span class="stack mono">{entry.data.stack.join(' / ')}</span>
+  <span class="status"><span class:list={['status-dot', { 'is-current': current }]}></span>{projectStatusLabels[entry.data.status]}</span>
+  <time class="mono" datetime={entry.data.updatedAt.toISOString()}>{formatDate(entry.data.updatedAt)}</time>
+  <span class="arrow"><Icon name="arrow" size={17} /></span>
+</a>
+
+<style>
+  .project-row {
+    display: grid;
+    grid-template-columns: minmax(9rem, 0.9fr) minmax(13rem, 1.45fr) minmax(12rem, 1.1fr) 6rem 6.5rem 1.25rem;
+    gap: 1rem;
+    align-items: center;
+    min-height: 5.5rem;
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  h3,
+  p {
+    margin: 0;
+  }
+
+  h3 {
+    font-family: var(--font-display);
+    font-size: 1rem;
+  }
+
+  p,
+  .stack,
+  .status,
+  time {
+    color: var(--color-muted);
+    font-size: 0.78rem;
+  }
+
+  p {
+    margin-top: 0.25rem;
+  }
+
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+  }
+
+  .arrow {
+    color: var(--color-muted);
+    opacity: 0.55;
+    transition: color 160ms ease, opacity 160ms ease, transform 160ms ease;
+  }
+
+  .project-row:hover h3,
+  .project-row:hover .arrow {
+    color: var(--color-accent);
+    opacity: 1;
+  }
+
+  .project-row:hover .arrow,
+  .project-row:focus-visible .arrow {
+    transform: translateX(0.15rem);
+  }
+
+  @media (max-width: 1300px) {
+    .project-row {
+      grid-template-columns: minmax(12rem, 1fr) 6rem 6.5rem 1.25rem;
+    }
+
+    p,
+    .stack {
+      display: none;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .project-row {
+      position: relative;
+      display: block;
+      min-height: 0;
+      padding: 1.4rem 2rem 1.4rem 0;
+    }
+
+    h3 {
+      font-size: 1.1rem;
+    }
+
+    p {
+      display: block;
+      margin-top: 0.45rem;
+    }
+
+    .stack {
+      display: block;
+      margin-top: 0.85rem;
+    }
+
+    .status,
+    time {
+      display: inline-flex;
+      margin-top: 0.5rem;
+      margin-right: 0.65rem;
+    }
+
+    .arrow {
+      position: absolute;
+      top: 50%;
+      right: 0;
+      opacity: 1;
+      transform: translateY(-50%);
+    }
+
+    .project-row:hover .arrow,
+    .project-row:focus-visible .arrow {
+      transform: translateY(-50%);
+    }
+  }
+</style>

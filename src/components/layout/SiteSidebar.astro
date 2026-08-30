@@ -1,0 +1,187 @@
+---
+import Icon from '../ui/Icon.astro';
+
+interface Props {
+  active: 'index' | 'writing' | 'reading' | 'projects' | 'now';
+}
+
+const { active } = Astro.props;
+const nav = [
+  { id: 'index', label: '索引', href: '/', icon: 'index' },
+  { id: 'writing', label: '文章', href: '/writing/', icon: 'writing' },
+  { id: 'reading', label: '阅读', href: '/reading/', icon: 'reading' },
+  { id: 'projects', label: '项目', href: '/projects/', icon: 'projects' },
+  { id: 'now', label: '现在', href: '/now/', icon: 'now' },
+] as const;
+---
+
+<aside class="sidebar">
+  <div>
+    <a class="identity" href="/" aria-label="Leo 首页">
+      <strong>LEO</strong>
+      <span>一个程序员的阅读与构建记录</span>
+    </a>
+
+    <nav aria-label="主导航">
+      {nav.map((item) => (
+        <a class:list={['nav-link', { active: active === item.id }]} href={item.href} aria-current={active === item.id ? 'page' : undefined}>
+          <Icon name={item.icon} size={19} />
+          <span>{item.label}</span>
+        </a>
+      ))}
+    </nav>
+
+    <section class="now-summary" aria-labelledby="sidebar-now">
+      <h2 id="sidebar-now">NOW</h2>
+      <ul>
+        <li><span class="status-dot is-current"></span><span>正在构建 leo-log</span></li>
+        <li><span class="status-dot"></span><span>正在读《置身事内》</span></li>
+        <li><span class="status-dot"></span><span>通常在周末更新</span></li>
+      </ul>
+    </section>
+  </div>
+
+  <footer>
+    <div class="socials" aria-label="站外链接">
+      <a href="mailto:leo@example.com" aria-label="发送邮件"><Icon name="mail" /></a>
+      <a href="https://github.com/" aria-label="GitHub"><Icon name="github" /></a>
+      <a href="/rss.xml" aria-label="RSS 订阅"><Icon name="rss" /></a>
+    </div>
+    <p>最后更新 <time datetime="2026-08-29">2026.08.29</time></p>
+  </footer>
+</aside>
+
+<style>
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 20;
+    display: flex;
+    width: var(--sidebar-width);
+    flex-direction: column;
+    justify-content: space-between;
+    overflow-y: auto;
+    padding: 2.6rem 2rem 2rem;
+    border-right: 1px solid var(--color-line);
+    background: var(--color-sidebar);
+  }
+
+  .identity {
+    display: block;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .identity strong {
+    display: block;
+    margin-bottom: 0.65rem;
+    font-family: var(--font-display);
+    font-size: 2.7rem;
+    font-stretch: condensed;
+    line-height: 1;
+    letter-spacing: -0.04em;
+  }
+
+  .identity span {
+    color: var(--color-body);
+    font-size: 0.78rem;
+  }
+
+  nav {
+    display: grid;
+    gap: 0.25rem;
+    padding: 1.6rem 0;
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .nav-link {
+    position: relative;
+    display: flex;
+    min-height: 2.8rem;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.5rem 0;
+    font-size: 0.96rem;
+    transition: color 160ms ease;
+  }
+
+  .nav-link::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 0;
+    width: 2px;
+    height: 1.5rem;
+    background: transparent;
+    transform: translateY(-50%);
+  }
+
+  .nav-link:hover,
+  .nav-link.active {
+    color: var(--color-accent);
+  }
+
+  .nav-link.active::after {
+    background: var(--color-accent);
+  }
+
+  .now-summary {
+    padding-top: 1.6rem;
+  }
+
+  .now-summary h2 {
+    margin: 0 0 1rem;
+    color: var(--color-muted);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+  }
+
+  .now-summary ul {
+    display: grid;
+    gap: 0.7rem;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  .now-summary li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.65rem;
+    color: var(--color-muted);
+    font-size: 0.77rem;
+    line-height: 1.5;
+  }
+
+  footer {
+    padding-top: 2rem;
+  }
+
+  .socials {
+    display: flex;
+    gap: 1.15rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .socials a {
+    color: var(--color-body);
+  }
+
+  .socials a:hover {
+    color: var(--color-accent);
+  }
+
+  footer p {
+    margin: 0;
+    color: var(--color-muted);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+  }
+
+  @media (max-width: 900px) {
+    .sidebar {
+      display: none;
+    }
+  }
+</style>

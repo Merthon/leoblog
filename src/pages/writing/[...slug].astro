@@ -1,0 +1,151 @@
+---
+import { render, type CollectionEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import RelatedContent from '../../components/content/RelatedContent.astro';
+import { formatDate, getProjects, getPublishedWriting, getReadingNotes, writingTypeLabels } from '../../lib/content';
+import '../../styles/content.css';
+
+export async function getStaticPaths() {
+  const entries = await getPublishedWriting();
+  return entries.map((post) => ({ params: { slug: post.id }, props: { post } }));
+}
+
+interface Props { post: CollectionEntry<'writing'> }
+const { post } = Astro.props;
+const { Content, headings } = await render(post);
+const [allWriting, readings, projects] = await Promise.all([getPublishedWriting(), getReadingNotes(), getProjects()]);
+const index = allWriting.findIndex((entry) => entry.id === post.id);
+const newer = index > 0 ? allWriting[index - 1] : undefined;
+const older = index < allWriting.length - 1 ? allWriting[index + 1] : undefined;
+const related = [
+  ...post.data.relatedReadings.map((id) => {
+    const entry = readings.find((item) => item.id === id);
+    return entry && { label: '阅读笔记', title: entry.data.title, href: `/reading/${entry.id}/` };
+  }),
+  ...post.data.relatedProjects.map((id) => {
+    const entry = projects.find((item) => item.id === id);
+    return entry && { label: '相关项目', title: entry.data.title, href: `/projects/${entry.id}/` };
+  }),
+].filter((item): item is NonNullable<typeof item> => Boolean(item));
+const toc = headings.filter((heading) => heading.depth === 2 || heading.depth === 3);
+---
+
+<BaseLayout title={post.data.title} description={post.data.description} active="writing" article>
+  <article class="article-page page-content">
+    <header class="article-header">
+      <div class="article-type">文章 / {writingTypeLabels[post.data.type]}</div>
+      <h1>{post.data.title}</h1>
+      <p>{post.data.description}</p>
+      <div class="article-meta mono">
+        <time datetime={post.data.publishedAt.toISOString()}>{formatDate(post.data.publishedAt)}</time>
+        <span>阅读 {post.data.readingMinutes} 分钟</span>
+        {post.data.updatedAt && <span>最后修订 {formatDate(post.data.updatedAt)}</span>}
+      </div>
+    </header>
+
+    {toc.length > 0 && (
+      <details class="mobile-toc">
+        <summary>目录 · {toc.filter((item) => item.depth === 2).length} 个章节</summary>
+        <ol>{toc.map((item) => <li class:list={{ nested: item.depth === 3 }}><a href={`#${item.slug}`}>{item.text}</a></li>)}</ol>
+      </details>
+    )}
+
+    <div class="article-grid">
+      <div>
+        <div class="prose" data-pagefind-body><Content /></div>
+        {post.data.updatedAt && (
+          <div class="mobile-revision">
+            <strong>修订 {formatDate(post.data.updatedAt)}</strong>
+            <p>补充内容与表达说明。</p>
+          </div>
+        )}
+        <div class="mobile-related"><RelatedContent items={related} title="相关笔记" /></div>
+        <nav class="article-pagination" aria-label="相邻文章">
+          {newer ? <a href={`/writing/${newer.id}/`}>← 上一篇<span>{newer.data.title}</span></a> : <span></span>}
+          {older ? <a class="next" href={`/writing/${older.id}/`}>下一篇 →<span>{older.data.title}</span></a> : <span></span>}
+        </nav>
+      </div>
+
+      {toc.length > 0 && (
+        <aside class="desktop-toc" aria-label="文章目录">
+          <h2>目录</h2>
+          <ol>{toc.map((item, itemIndex) => <li class:list={{ nested: item.depth === 3, current: itemIndex === 0 }}><a href={`#${item.slug}`}>{item.text}</a></li>)}</ol>
+          {post.data.updatedAt && <div class="revision"><strong>修订 {formatDate(post.data.updatedAt)}</strong><p>补充内容与表达说明。</p></div>}
+          {related.length > 0 && (
+            <section class="desktop-related" aria-labelledby="desktop-related-title">
+              <h2 id="desktop-related-title">相关笔记</h2>
+              <ul>{related.map((item) => <li><a href={item.href}>{item.title}</a></li>)}</ul>
+            </section>
+          )}
+        </aside>
+      )}
+    </div>
+  </article>
+</BaseLayout>
+
+<script>
+  document.querySelectorAll<HTMLElement>('.prose pre').forEach((block) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'code-copy';
+    button.textContent = '复制';
+    button.setAttribute('aria-label', '复制代码');
+    button.addEventListener('click', async () => {
+      const code = block.querySelector('code')?.textContent ?? block.textContent ?? '';
+      await navigator.clipboard.writeText(code);
+      button.textContent = '已复制';
+      window.setTimeout(() => { button.textContent = '复制'; }, 1600);
+    });
+    block.append(button);
+  });
+</script>
+
+<style>
+  .article-page { max-width: 1320px; }
+  .article-header { max-width: var(--article-width); padding-bottom: 2rem; border-bottom: 1px solid var(--color-line); }
+  .article-type { margin-bottom: 1.5rem; color: var(--color-accent); font-size: 0.82rem; font-weight: 650; }
+  .article-header h1 { margin: 0 0 1rem; font-family: var(--font-display); font-size: var(--text-2xl); line-height: 1.25; letter-spacing: -0.025em; }
+  .article-header > p { margin: 0 0 1rem; color: var(--color-body); font-size: var(--text-lg); }
+  .article-meta { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; color: var(--color-muted); font-size: 0.78rem; }
+  .article-grid { display: grid; grid-template-columns: minmax(0, var(--article-width)) minmax(11rem, 1fr); gap: clamp(3rem, 5vw, 4.5rem); align-items: start; padding-top: 2rem; }
+  .desktop-toc { position: sticky; top: 2rem; padding-left: 2rem; border-left: 1px solid var(--color-line); }
+  .desktop-toc h2 { margin: 0 0 1rem; font-family: var(--font-display); font-size: 1rem; }
+  .desktop-toc ol, .mobile-toc ol { display: grid; gap: 0.7rem; padding: 0; margin: 0; list-style: none; }
+  .desktop-toc li { color: var(--color-muted); font-size: 0.8rem; }
+  .desktop-toc li.nested { padding-left: 0.85rem; }
+  .desktop-toc li.current { color: var(--color-accent); }
+  .desktop-toc li.current::before { content: ""; display: inline-block; width: 0.35rem; height: 0.35rem; margin-right: 0.55rem; border-radius: 50%; background: var(--color-accent); }
+  .revision { padding-top: 1.5rem; margin-top: 2rem; border-top: 1px solid var(--color-line); border-left: 2px solid var(--color-accent); padding-left: 0.85rem; font-size: 0.75rem; }
+  .revision strong { color: var(--color-accent); }
+  .revision p { margin: 0.5rem 0 0; color: var(--color-muted); }
+  .desktop-related { padding-top: 1.5rem; margin-top: 2rem; border-top: 1px solid var(--color-line); }
+  .desktop-related ul { display: grid; gap: 0.75rem; padding: 0; margin: 0; list-style: none; }
+  .desktop-related li { font-size: 0.8rem; line-height: 1.55; }
+  .desktop-related a:hover { color: var(--color-accent); }
+  .desktop-related a::before { content: "↗"; margin-right: 0.55rem; color: var(--color-muted); }
+  .mobile-revision, .mobile-related { display: none; }
+  .mobile-toc { display: none; }
+  .article-pagination { display: grid; grid-template-columns: 1fr 1fr; margin-top: 3rem; border: 1px solid var(--color-line); }
+  .article-pagination > * { display: flex; min-height: 4.5rem; align-items: center; padding: 1rem 1.25rem; }
+  .article-pagination > * + * { border-left: 1px solid var(--color-line); }
+  .article-pagination a { color: var(--color-accent); font-size: 0.9rem; }
+  .article-pagination a span { display: none; }
+  .article-pagination .next { text-align: right; }
+  .article-pagination .next { justify-content: flex-end; }
+  @media (max-width: 900px) {
+    .article-header { padding-bottom: 1.5rem; }
+    .article-header > p { font-size: 1rem; }
+    .mobile-toc { display: block; margin: 1.5rem 0; border: 1px solid var(--color-line); background: var(--color-sidebar); }
+    .mobile-toc summary { min-height: 3.5rem; padding: 0.9rem 1rem; cursor: pointer; }
+    .mobile-toc ol { padding: 0 1rem 1rem; }
+    .mobile-toc li { color: var(--color-muted); font-size: 0.85rem; }
+    .article-grid { display: block; padding-top: 0; }
+    .desktop-toc { display: none; }
+    .mobile-revision { display: block; padding: 1rem 0.85rem; margin-top: 2.5rem; border-top: 1px solid var(--color-line); border-bottom: 1px solid var(--color-line); border-left: 2px solid var(--color-accent); }
+    .mobile-revision strong { color: var(--color-accent); font-family: var(--font-mono); font-size: 0.82rem; }
+    .mobile-revision p { margin: 0.45rem 0 0; color: var(--color-muted); font-size: 0.85rem; }
+    .mobile-related { display: block; }
+    .article-pagination { margin-top: 1.5rem; }
+    .article-pagination > * { min-height: 4rem; padding: 0.85rem; }
+  }
+</style>

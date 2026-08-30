@@ -1,0 +1,53 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ReadingRow from '../../components/content/ReadingRow.astro';
+import SectionHeading from '../../components/ui/SectionHeading.astro';
+import { getReadingNotes } from '../../lib/content';
+
+const notes = await getReadingNotes();
+const current = notes.find((entry) => entry.data.status === 'reading');
+const indexed = notes.filter((entry) => entry.id !== current?.id);
+---
+
+<BaseLayout title="阅读笔记" description="阅读不是收藏书名，而是留下改变判断的部分。" active="reading">
+  <div class="page-content">
+    <h1 class="page-title">阅读笔记</h1>
+    <p class="page-description">阅读不是收藏书名，而是留下改变判断的部分。</p>
+    {current && (
+      <section class="currently-reading">
+        <SectionHeading title="正在读" />
+        <a href={`/reading/${current.id}/`}>
+          <h2>{current.data.title}</h2>
+          <p class="author">{current.data.author}</p>
+          <div class="progress-label">进度 <strong>{current.data.progress}%</strong></div>
+          <div class="progress" aria-label={`阅读进度 ${current.data.progress}%`}><span style={`width: ${current.data.progress}%`}></span></div>
+          <p class="takeaway">{current.data.takeaway}</p>
+        </a>
+      </section>
+    )}
+    <section class="notes-index">
+      <SectionHeading title="笔记索引" />
+      <div class="year mono">2026</div>
+      <div class="column-headings" aria-hidden="true"><span>日期</span><span>书与作者</span><span>留下的判断</span><span>关联</span><span></span></div>
+      <div class="reading-list">
+        {indexed.map((entry) => <ReadingRow entry={entry} relatedLabel={entry.data.relatedWriting.length ? '关联文章' : undefined} />)}
+      </div>
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  .currently-reading { padding: 1.5rem 0 2.5rem; border-top: 1px solid var(--color-line); border-bottom: 1px solid var(--color-line); }
+  .currently-reading a { display: block; max-width: 34rem; }
+  .currently-reading h2 { margin: 0; font-family: var(--font-display); font-size: 1.8rem; }
+  .author, .takeaway { color: var(--color-muted); }
+  .author { margin: 0.25rem 0 1rem; }
+  .progress-label { font-size: 0.85rem; }
+  .progress { height: 3px; margin: 0.5rem 0 1rem; background: var(--color-line); }
+  .progress span { display: block; height: 100%; background: var(--color-accent); }
+  .takeaway { margin: 0; font-size: 0.9rem; }
+  .notes-index { padding-top: 2.5rem; }
+  .year { margin-bottom: 1rem; color: var(--color-accent); }
+  .column-headings { display: grid; grid-template-columns: 5rem minmax(13rem, 1fr) minmax(16rem, 1.6fr) 6rem 1.25rem; gap: 1rem; padding-bottom: 0.65rem; border-bottom: 1px solid var(--color-line); color: var(--color-muted); font-size: 0.75rem; }
+  @media (max-width: 1280px) { .column-headings { display: none; } }
+</style>

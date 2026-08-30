@@ -1,0 +1,122 @@
+.prose {
+  width: min(100%, var(--reading-width));
+  color: var(--color-body);
+  font-size: 1.06rem;
+  line-height: 1.9;
+}
+
+.prose :where(h2, h3) {
+  color: var(--color-ink);
+  font-family: var(--font-display);
+  line-height: 1.35;
+  letter-spacing: -0.015em;
+  scroll-margin-top: 6rem;
+}
+
+.prose h2 {
+  margin: 3rem 0 1rem;
+  font-size: 1.65rem;
+}
+
+.prose h3 {
+  margin: 2.25rem 0 0.75rem;
+  font-size: 1.25rem;
+}
+
+.prose p,
+.prose ul,
+.prose ol,
+.prose blockquote,
+.prose pre {
+  margin-bottom: 1.35rem;
+}
+
+.prose a {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+.prose code:not(pre code) {
+  padding: 0.12em 0.36em;
+  border: 1px solid var(--color-line);
+  background: var(--color-sidebar);
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+}
+
+.prose pre {
+  position: relative;
+  overflow-x: auto;
+  padding: 1rem 1.15rem;
+  border: 1px solid var(--color-line);
+  background: var(--color-sidebar) !important;
+  font-family: var(--font-mono);
+  font-size: 0.86rem;
+  font-variant-ligatures: contextual;
+  line-height: 1.65;
+}
+
+.prose pre code {
+  font-family: inherit;
+}
+
+.prose pre .code-copy {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+  min-width: 2.75rem;
+  min-height: 2rem;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid var(--color-line);
+  background: var(--color-paper);
+  color: var(--color-muted);
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.prose pre .code-copy:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.prose blockquote {
+  margin-inline: 0;
+  padding-left: 1rem;
+  border-left: 2px solid var(--color-accent);
+  color: var(--color-muted);
+}
+
+.prose hr {
+  border: 0;
+  border-top: 1px solid var(--color-line);
+  margin: 3rem 0;
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+
+.prose th,
+.prose td {
+  padding: 0.7rem 0.5rem;
+  border-bottom: 1px solid var(--color-line);
+  text-align: left;
+}
+
+@media (max-width: 900px) {
+  .prose {
+    font-size: 1rem;
+    line-height: 1.85;
+  }
+
+  .prose h2 {
+    margin-top: 2.5rem;
+    font-size: 1.5rem;
+  }
+}

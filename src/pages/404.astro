@@ -1,0 +1,20 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="页面不存在" description="这个页面不存在，或已经被移动。" active="index">
+  <div class="page-content not-found">
+    <span class="mono">404</span>
+    <h1>这里没有留下记录。</h1>
+    <p>页面可能已经移动，也可能从未存在。</p>
+    <a href="/">返回索引 →</a>
+  </div>
+</BaseLayout>
+
+<style>
+  .not-found { padding-top: 12vh; }
+  .not-found > span { color: var(--color-accent); }
+  h1 { margin: 1rem 0; font-family: var(--font-display); font-size: var(--text-2xl); }
+  p { color: var(--color-muted); }
+  a { color: var(--color-accent); }
+</style>

@@ -1,0 +1,139 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SectionHeading from '../components/ui/SectionHeading.astro';
+import Icon from '../components/ui/Icon.astro';
+import { formatDate, getProjects, getPublishedWriting, getReadingNotes } from '../lib/content';
+
+const [writing, reading, projects] = await Promise.all([
+  getPublishedWriting(),
+  getReadingNotes(),
+  getProjects(),
+]);
+
+const featured = writing.find((entry) => entry.id === 'why-personal-website')
+  ?? writing.find((entry) => entry.data.featured)
+  ?? writing[0];
+const recentWriting = writing.find((entry) => entry.id === 'how-to-write-complex-problems') ?? writing[0];
+const recentReading = reading.find((entry) => entry.id === 'pragmatic-programmer') ?? reading[0];
+const recentProject = projects.find((entry) => entry.id === 'leo-log') ?? projects[0];
+const recent = [
+  recentWriting && {
+    type: '文章',
+    title: recentWriting.data.title,
+    href: `/writing/${recentWriting.id}/`,
+    date: recentWriting.data.publishedAt,
+    icon: 'writing' as const,
+  },
+  recentReading && {
+    type: '阅读',
+    title: `${recentReading.data.title} 重读`,
+    href: `/reading/${recentReading.id}/`,
+    date: recentReading.data.publishedAt,
+    icon: 'reading' as const,
+  },
+  recentProject && {
+    type: '项目',
+    title: `${recentProject.data.title} 重构记录`,
+    href: `/projects/${recentProject.id}/`,
+    date: recentProject.data.updatedAt,
+    icon: 'projects' as const,
+  },
+].filter(Boolean);
+---
+
+<BaseLayout title="Leo" description="一个程序员的阅读与构建记录。" active="index">
+  <div class="page-content home">
+    <section class="feature">
+      <div class="feature-label"><span>最近在想</span><span>一段正在形成的判断</span></div>
+      <h1><a href={`/writing/${featured.id}/`}>{featured.data.title}</a></h1>
+      <p>{featured.data.description}</p>
+      <time class="mono" datetime={featured.data.publishedAt.toISOString()}>{formatDate(featured.data.publishedAt)}</time>
+    </section>
+
+    <section class="updates">
+      <SectionHeading title="最近更新" accent />
+      <div class="update-list">
+        {recent.map((item, index) => item && (
+          <a class="update-row" href={item.href}>
+            <time class="mono" datetime={item.date.toISOString()}>{formatDate(item.date)}</time>
+            <Icon name={item.icon} size={20} />
+            <strong>{item.title}</strong>
+            <span class:list={['update-type', { current: index === 0 }]}><span class:list={['status-dot', { 'is-current': index === 0 }]}></span>{item.type}</span>
+            <span class="update-arrow"><Icon name="arrow" size={18} /></span>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <section class="connections">
+      <SectionHeading title="内容之间" accent />
+      <div class="connection-flow">
+        <a href="/reading/philosophy-of-software-design/">
+          <span>阅读启发</span>
+          <strong>来自读书笔记的沉淀</strong>
+        </a>
+        <span class="flow-arrow" aria-hidden="true">··············································→</span>
+        <a href="/projects/leo-log/">
+          <span>项目实践</span>
+          <strong>在构建中验证与落地</strong>
+        </a>
+      </div>
+    </section>
+
+    <section class="mobile-now">
+      <SectionHeading title="NOW" accent />
+      <ul>
+        <li><span class="status-dot is-current"></span>正在构建 leo-log</li>
+        <li><span class="status-dot"></span>正在读《置身事内》</li>
+        <li><span class="status-dot"></span>通常在周末更新</li>
+      </ul>
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  .feature { padding-bottom: 3.5rem; border-bottom: 1px solid var(--color-line); }
+  .feature-label { display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2.1rem; color: var(--color-muted); font-size: 0.85rem; }
+  .feature-label span:first-child { color: var(--color-accent); font-weight: 650; }
+  .feature-label span:first-child::after { content: ""; display: block; width: 2rem; height: 2px; margin-top: 0.65rem; background: var(--color-accent); }
+  h1 { max-width: 52rem; margin: 0 0 1.2rem; font-family: var(--font-display); font-size: var(--text-hero); line-height: 1.18; letter-spacing: -0.025em; }
+  .feature p { max-width: 50rem; margin-bottom: 1.35rem; color: var(--color-muted); font-size: var(--text-lg); }
+  .feature time { color: var(--color-muted); font-size: 0.85rem; }
+  .updates, .connections { padding-top: 2.75rem; }
+  .update-list { border-top: 1px solid var(--color-line); }
+  .update-row { display: grid; grid-template-columns: 7.5rem 1.5rem minmax(0, 1fr) 5rem 1.5rem; gap: 1.2rem; align-items: center; min-height: 5.25rem; border-bottom: 1px solid var(--color-line); }
+  .update-row time, .update-type { color: var(--color-muted); font-size: 0.8rem; }
+  .update-row strong { font-family: var(--font-display); font-size: 1.05rem; }
+  .update-type { display: flex; align-items: center; gap: 0.55rem; }
+  .update-type.current { color: var(--color-accent); }
+  .update-arrow { color: var(--color-muted); opacity: 0.55; transition: color 160ms ease, opacity 160ms ease, transform 160ms ease; }
+  .update-row:hover strong, .update-row:hover .update-arrow { color: var(--color-accent); opacity: 1; }
+  .update-row:hover .update-arrow { transform: translateX(0.15rem); }
+  .connection-flow { display: grid; grid-template-columns: 1fr minmax(8rem, 1.25fr) 1fr; gap: 1.5rem; align-items: center; padding: 1.35rem 0 0.5rem; }
+  .connection-flow a { display: grid; gap: 0.4rem; }
+  .connection-flow a:last-child { text-align: right; }
+  .connection-flow span { color: var(--color-muted); font-size: 0.8rem; }
+  .connection-flow strong { font-size: 0.92rem; }
+  .flow-arrow { overflow: hidden; color: var(--color-accent) !important; font-family: var(--font-mono); white-space: nowrap; }
+  .mobile-now { display: none; }
+
+  @media (max-width: 900px) {
+    .feature { padding-bottom: 2rem; }
+    .feature-label { gap: 1rem; margin-bottom: 1.75rem; }
+    .feature p { font-size: 1rem; line-height: 1.8; }
+    .updates, .connections { padding-top: 2rem; }
+    .update-row { position: relative; display: grid; grid-template-columns: 1.5rem minmax(0, 1fr); gap: 0.85rem; min-height: 0; padding: 1.25rem 2rem 1.25rem 0; }
+    .update-row time { grid-column: 2; grid-row: 1; }
+    .update-row > :global(svg) { grid-row: 2; }
+    .update-row strong { grid-column: 2; grid-row: 2; }
+    .update-type { grid-column: 2; grid-row: 1; justify-self: end; }
+    .update-arrow { position: absolute; top: 50%; right: 0; opacity: 1; transform: translateY(-50%); }
+    .connection-flow { display: flex; align-items: flex-start; gap: 0.65rem; padding: 0.5rem 0; }
+    .connection-flow a:last-child { text-align: left; }
+    .flow-arrow { width: auto; font-size: 0; }
+    .flow-arrow::after { content: "→"; font-size: 1.15rem; }
+    .mobile-now { display: block; padding-top: 2.5rem; margin-top: 2rem; border-top: 1px solid var(--color-line); }
+    .mobile-now ul { display: grid; gap: 0.65rem; padding: 0; margin: 0; list-style: none; }
+    .mobile-now li { display: flex; align-items: center; gap: 0.7rem; color: var(--color-muted); font-size: 0.9rem; }
+  }
+</style>

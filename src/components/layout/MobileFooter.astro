@@ -1,0 +1,23 @@
+<footer class="mobile-footer">
+  <a href="mailto:leo@example.com">Email</a>
+  <a href="https://github.com/">GitHub</a>
+  <a href="/rss.xml">RSS</a>
+</footer>
+
+<style>
+  .mobile-footer {
+    display: none;
+  }
+
+  @media (max-width: 900px) {
+    .mobile-footer {
+      display: flex;
+      justify-content: space-between;
+      padding: 1.35rem 1.25rem;
+      border-top: 1px solid var(--color-line);
+      color: var(--color-muted);
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+    }
+  }
+</style>

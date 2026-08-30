@@ -1,0 +1,52 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ProjectRow from '../../components/content/ProjectRow.astro';
+import SectionHeading from '../../components/ui/SectionHeading.astro';
+import { getProjects } from '../../lib/content';
+
+const projects = await getProjects();
+const featured = projects.find((entry) => entry.data.featured) ?? projects[0];
+---
+
+<BaseLayout title="项目" description="把想法做成可以运行、可以验证的东西。" active="projects">
+  <div class="page-content">
+    <h1 class="page-title">项目</h1>
+    <p class="page-description">把想法做成可以运行、可以验证的东西。</p>
+    <section class="featured-project">
+      <span class="project-state">正在构建</span>
+      <h2><a href={`/projects/${featured.id}/`}>{featured.data.title}</a></h2>
+      <div class="project-facts">
+        <div><h3>问题</h3><p>{featured.data.problem}</p><p class="stack mono">{featured.data.stack.join(' / ')}</p></div>
+        <div><h3>关键取舍</h3><ul>{featured.data.decisions.map((decision) => <li>{decision}</li>)}</ul></div>
+        <div><h3>当前状态</h3><p>第一版设计完成，准备进入开发。</p><h3 class="related-heading">关联文章</h3><a class="related-link" href="/writing/why-personal-website/">为什么个人网站值得长期维护 →</a></div>
+      </div>
+    </section>
+    <section class="projects-index">
+      <SectionHeading title="项目索引" />
+      <div class="column-headings" aria-hidden="true"><span>项目</span><span>解决什么问题</span><span>技术栈</span><span>状态</span><span>最后更新</span><span></span></div>
+      <div class="project-list">{projects.map((entry) => <ProjectRow entry={entry} />)}</div>
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  :global(.page-title)::after { content: ""; display: block; width: 2rem; height: 2px; margin-top: 1rem; background: var(--color-accent); }
+  .featured-project { padding: 2rem 0 2.5rem; border-top: 1px solid var(--color-line); border-bottom: 1px solid var(--color-line); }
+  .project-state, .related-link { color: var(--color-accent); font-size: 0.82rem; }
+  .featured-project > h2 { margin: 0.75rem 0 0; font-family: var(--font-display); font-size: 2.3rem; letter-spacing: -0.025em; }
+  .stack { margin-top: 1.75rem !important; color: var(--color-muted) !important; font-size: 0.82rem !important; }
+  .project-facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.5rem; padding: 1.5rem 0; }
+  .project-facts h3 { margin: 0 0 0.65rem; font-size: 0.88rem; }
+  .project-facts p { margin: 0; color: var(--color-body); font-size: 0.88rem; }
+  .project-facts ul { display: grid; gap: 0.55rem; padding: 0; margin: 0; list-style: none; }
+  .project-facts li { position: relative; padding-left: 1.15rem; color: var(--color-body); font-size: 0.88rem; }
+  .project-facts li::before { content: ""; position: absolute; top: 0.7em; left: 0; width: 0.35rem; height: 0.35rem; border-radius: 50%; background: var(--color-muted); }
+  .related-heading { margin-top: 1.75rem !important; }
+  .projects-index { padding-top: 2.5rem; }
+  .column-headings { display: grid; grid-template-columns: minmax(9rem, 0.9fr) minmax(13rem, 1.45fr) minmax(12rem, 1.1fr) 6rem 6.5rem 1.25rem; gap: 1rem; padding-bottom: 0.65rem; border-bottom: 1px solid var(--color-line); color: var(--color-muted); font-size: 0.75rem; }
+  @media (max-width: 1300px) { .column-headings { display: none; } }
+  @media (max-width: 900px) {
+    .project-facts { display: block; padding: 1rem 0; }
+    .project-facts div { padding: 1rem 0; border-bottom: 1px solid var(--color-line); }
+  }
+</style>

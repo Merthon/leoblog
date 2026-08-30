@@ -1,0 +1,127 @@
+---
+import Icon from '../ui/Icon.astro';
+import { formatShortDate, type ReadingEntry } from '../../lib/content';
+
+interface Props {
+  entry: ReadingEntry;
+  relatedLabel?: string;
+}
+
+const { entry, relatedLabel } = Astro.props;
+---
+
+<a class="reading-row" href={`/reading/${entry.id}/`}>
+  <time class="mono" datetime={entry.data.publishedAt.toISOString()}>{formatShortDate(entry.data.publishedAt)}</time>
+  <div class="book">
+    <h3>{entry.data.title}</h3>
+    <p>{entry.data.author}</p>
+  </div>
+  <p class="takeaway">{entry.data.takeaway}</p>
+  <span class:list={['relation', { active: relatedLabel }]}>{relatedLabel ?? '—'}</span>
+  <span class="arrow"><Icon name="arrow" size={17} /></span>
+</a>
+
+<style>
+  .reading-row {
+    display: grid;
+    grid-template-columns: 5rem minmax(13rem, 1fr) minmax(16rem, 1.6fr) 6rem 1.25rem;
+    gap: 1rem;
+    align-items: center;
+    min-height: 5.25rem;
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  time,
+  .book p,
+  .takeaway,
+  .relation {
+    color: var(--color-muted);
+    font-size: 0.82rem;
+  }
+
+  h3,
+  p {
+    margin: 0;
+  }
+
+  h3 {
+    font-family: var(--font-display);
+    font-size: 1rem;
+  }
+
+  .book p {
+    margin-top: 0.25rem;
+  }
+
+  .relation.active {
+    color: var(--color-accent);
+  }
+
+  .arrow {
+    color: var(--color-muted);
+    opacity: 0.55;
+    transition: color 160ms ease, opacity 160ms ease, transform 160ms ease;
+  }
+
+  .reading-row:hover h3,
+  .reading-row:hover .arrow {
+    color: var(--color-accent);
+    opacity: 1;
+  }
+
+  .reading-row:hover .arrow,
+  .reading-row:focus-visible .arrow {
+    transform: translateX(0.15rem);
+  }
+
+  @media (max-width: 1280px) {
+    .reading-row {
+      grid-template-columns: 4rem minmax(11rem, 1fr) 1.5fr 1.25rem;
+    }
+
+    .relation {
+      display: none;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .reading-row {
+      position: relative;
+      display: block;
+      min-height: 0;
+      padding: 1.4rem 2rem 1.4rem 0;
+    }
+
+    time {
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+
+    h3 {
+      font-size: 1.1rem;
+    }
+
+    .takeaway {
+      margin-top: 0.8rem;
+      line-height: 1.65;
+    }
+
+    .relation.active {
+      display: block;
+      margin-top: 0.65rem;
+    }
+
+    .arrow {
+      position: absolute;
+      top: 50%;
+      right: 0;
+      opacity: 1;
+      transform: translateY(-50%);
+    }
+
+    .reading-row:hover .arrow,
+    .reading-row:focus-visible .arrow {
+      transform: translateY(-50%);
+    }
+  }
+</style>

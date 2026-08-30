@@ -1,0 +1,64 @@
+---
+import '@fontsource/ibm-plex-sans-condensed/latin-400.css';
+import '@fontsource/ibm-plex-sans-condensed/latin-500.css';
+import '@fontsource/ibm-plex-sans-condensed/latin-600.css';
+import '@fontsource/ibm-plex-sans-condensed/latin-700.css';
+import '@fontsource/jetbrains-mono/latin-400.css';
+import '@fontsource/jetbrains-mono/latin-500.css';
+import '@fontsource/jetbrains-mono/latin-600.css';
+import '../styles/global.css';
+import SiteSidebar from '../components/layout/SiteSidebar.astro';
+import MobileHeader from '../components/layout/MobileHeader.astro';
+import MobileFooter from '../components/layout/MobileFooter.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  active: 'index' | 'writing' | 'reading' | 'projects' | 'now';
+  image?: string;
+  article?: boolean;
+}
+
+const {
+  title,
+  description,
+  active,
+  image = '/og-default.png',
+  article = false,
+} = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin);
+const fullTitle = title === 'Leo' ? 'Leo / Personal Log' : `${title} · Leo`;
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#ffffff" />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate" type="application/rss+xml" title="Leo / Personal Log" href="/rss.xml" />
+    <meta property="og:type" content={article ? 'article' : 'website'} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={new URL(image, Astro.site ?? Astro.url.origin)} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <title>{fullTitle}</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">跳到正文</a>
+    <SiteSidebar active={active} />
+    <MobileHeader active={active} />
+    <div class="page-shell">
+      <main class="page-main" id="main-content">
+        <slot />
+      </main>
+      <MobileFooter />
+    </div>
+  </body>
+</html>

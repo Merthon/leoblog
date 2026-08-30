@@ -1,0 +1,57 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="现在" description="Leo 最近正在做、正在读和正在思考的事情。" active="now">
+  <div class="page-content now-page">
+    <h1 class="page-title">现在</h1>
+    <p class="updated mono">更新于 2026.08.29</p>
+    <div class="now-grid">
+      <section class="intro">
+        <h2>你好，我是 Leo，一名程序员。</h2>
+        <p>我喜欢把复杂的问题拆开，也喜欢通过写作检查自己的判断。这个网站记录我读过的书、做过的项目，以及一些还没有想明白的事情。</p>
+        <div class="subsection"><h3>目前关注</h3><ul><li>软件设计</li><li>写作系统</li><li>知识管理</li></ul></div>
+      </section>
+      <section class="current">
+        <div><h3>正在做</h3><ul><li class="active">重构 leo-log</li><li>整理过去的读书笔记</li></ul></div>
+        <div><h3>正在读</h3><ul><li>《置身事内》</li></ul></div>
+        <div><h3>近期计划</h3><ul><li>完成第一版网站</li><li>写完项目复盘</li></ul></div>
+      </section>
+    </div>
+    <div class="about-grid">
+      <section>
+        <h3>关于这个网站</h3>
+        <p>它不是作品陈列柜，而是一份持续维护的个人记录。</p>
+        <div class="principles"><h3>维护原则</h3><ul><li>内容属于自己</li><li>链接长期有效</li><li>设计保持克制</li></ul></div>
+      </section>
+      <section class="contact">
+        <h3>联系我</h3>
+        <dl><dt>Email</dt><dd><a href="mailto:leo@example.com">leo@example.com</a></dd><dt>GitHub</dt><dd><a href="https://github.com/">github.com/leo</a></dd><dt>RSS</dt><dd><a href="/rss.xml">/rss.xml</a></dd></dl>
+      </section>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .updated { margin: 0 0 2rem; color: var(--color-muted); }
+  .now-grid, .about-grid { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--color-line); }
+  .now-grid > section, .about-grid > section { padding: 2.25rem 3rem 2.25rem 0; }
+  .now-grid > section + section, .about-grid > section + section { padding-left: 3rem; border-left: 1px solid var(--color-line); }
+  h2, h3 { font-family: var(--font-display); }
+  h2 { font-size: 1.3rem; }
+  h3 { margin: 0 0 0.8rem; font-size: 1.05rem; }
+  p { color: var(--color-body); }
+  .subsection, .principles, .current > div + div { padding-top: 1.6rem; margin-top: 1.6rem; border-top: 1px solid var(--color-line); }
+  ul { display: grid; gap: 0.6rem; padding: 0; margin: 0; list-style: none; }
+  li { position: relative; padding-left: 1.25rem; }
+  li::before { content: ""; position: absolute; top: 0.75em; left: 0; width: 0.38rem; height: 0.38rem; border-radius: 50%; background: var(--color-soft); }
+  li.active::before { background: var(--color-accent); }
+  dl { display: grid; grid-template-columns: 5rem 1fr; gap: 0.65rem 1rem; margin: 0; font-family: var(--font-mono); font-size: 0.85rem; }
+  dt { color: var(--color-muted); }
+  dd { margin: 0; }
+  @media (max-width: 900px) {
+    .now-grid, .about-grid { display: block; }
+    .now-grid > section, .about-grid > section, .now-grid > section + section, .about-grid > section + section { padding: 1.75rem 0; border-left: 0; }
+    .now-grid > section + section, .about-grid > section + section { border-top: 1px solid var(--color-line); }
+  }
+</style>

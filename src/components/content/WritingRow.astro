@@ -1,0 +1,169 @@
+---
+import Icon from '../ui/Icon.astro';
+import { formatDate, writingTypeLabels, type WritingEntry } from '../../lib/content';
+
+interface Props {
+  entry: WritingEntry;
+  showDescription?: boolean;
+  isNew?: boolean;
+}
+
+const { entry, showDescription = true, isNew = false } = Astro.props;
+const typeLabel = writingTypeLabels[entry.data.type];
+const visibleTags = entry.data.tags.filter((tag) => tag !== typeLabel).slice(0, 2);
+---
+
+<a class="writing-row" href={`/writing/${entry.id}/`}>
+  <div class="row-copy">
+    <div class="title-line">
+      <h3>{entry.data.title}</h3>
+      {isNew && <span class="new">NEW</span>}
+    </div>
+    {showDescription && <p>{entry.data.description}</p>}
+  </div>
+  <div class="meta mono">
+    <span>{formatDate(entry.data.publishedAt)}</span>
+    <span>{entry.data.readingMinutes} 分钟</span>
+  </div>
+  <div class="tags">
+    <span>{typeLabel}</span>
+    {visibleTags.map((tag) => <span>{tag}</span>)}
+  </div>
+  <span class="arrow"><Icon name="arrow" size={18} /></span>
+</a>
+
+<style>
+  .writing-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(10rem, auto) 1.25rem;
+    gap: 1.5rem;
+    align-items: center;
+    min-height: 7.75rem;
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .title-line {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+  }
+
+  h3 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    line-height: 1.35;
+  }
+
+  p {
+    margin: 0.45rem 0 0;
+    color: var(--color-muted);
+    font-size: 0.88rem;
+  }
+
+  .new {
+    color: var(--color-accent);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+  }
+
+  .meta,
+  .tags {
+    display: flex;
+    gap: 1rem;
+    color: var(--color-muted);
+    font-size: 0.78rem;
+    white-space: nowrap;
+  }
+
+  .tags span::before {
+    content: "# ";
+  }
+
+  .meta span + span::before {
+    content: "/";
+    margin-right: 1rem;
+  }
+
+  .arrow {
+    color: var(--color-muted);
+    opacity: 0.55;
+    transition: opacity 160ms ease, transform 160ms ease, color 160ms ease;
+  }
+
+  .writing-row:hover h3,
+  .writing-row:hover .arrow {
+    color: var(--color-accent);
+  }
+
+  .writing-row:hover .arrow,
+  .writing-row:focus-visible .arrow {
+    opacity: 1;
+    transform: translateX(0.15rem);
+  }
+
+  @media (max-width: 1180px) {
+    .writing-row {
+      grid-template-columns: minmax(0, 1fr) auto 1.25rem;
+    }
+
+    .tags {
+      display: none;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .writing-row {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.85rem 1rem;
+      min-height: 0;
+      padding: 1.5rem 2rem 1.5rem 0;
+    }
+
+    .row-copy {
+      grid-column: 1 / -1;
+    }
+
+    h3 {
+      font-size: 1.15rem;
+    }
+
+    .meta {
+      grid-column: 1;
+      margin-top: 0;
+      font-size: 0.75rem;
+    }
+
+    .tags {
+      display: flex;
+      grid-column: 2;
+      justify-content: flex-end;
+      font-size: 0.75rem;
+    }
+
+    .tags span::before {
+      content: "";
+    }
+
+    .tags span + span::before,
+    .meta span + span::before {
+      content: "·";
+      margin: 0 0.7rem;
+    }
+
+    .arrow {
+      position: absolute;
+      top: 50%;
+      right: 0;
+      opacity: 1;
+      transform: translateY(-50%);
+    }
+
+    .writing-row:hover .arrow,
+    .writing-row:focus-visible .arrow {
+      transform: translateY(-50%);
+    }
+  }
+</style>

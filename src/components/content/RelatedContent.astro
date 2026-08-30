@@ -1,0 +1,61 @@
+---
+interface Item {
+  label: string;
+  title: string;
+  href: string;
+}
+
+interface Props {
+  items: Item[];
+  title?: string;
+}
+
+const { items, title = '相关内容' } = Astro.props;
+---
+
+{items.length > 0 && (
+  <aside class="related" aria-labelledby="related-title">
+    <h2 id="related-title">{title}</h2>
+    <ul>
+      {items.map((item) => (
+        <li><span>{item.label}</span><a href={item.href}>{item.title} →</a></li>
+      ))}
+    </ul>
+  </aside>
+)}
+
+<style>
+  .related {
+    margin-top: var(--space-12);
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--color-line);
+  }
+
+  h2 {
+    margin: 0 0 1rem;
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+  }
+
+  ul {
+    display: grid;
+    gap: 0.75rem;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  li {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.9rem;
+  }
+
+  li span {
+    color: var(--color-muted);
+  }
+
+  a {
+    color: var(--color-accent);
+  }
+</style>

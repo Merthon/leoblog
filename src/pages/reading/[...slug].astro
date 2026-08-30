@@ -1,0 +1,50 @@
+---
+import { render, type CollectionEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import RelatedContent from '../../components/content/RelatedContent.astro';
+import { formatDate, getProjects, getPublishedWriting, getReadingNotes } from '../../lib/content';
+import '../../styles/content.css';
+
+export async function getStaticPaths() {
+  const entries = await getReadingNotes();
+  return entries.map((note) => ({ params: { slug: note.id }, props: { note } }));
+}
+
+interface Props { note: CollectionEntry<'reading'> }
+const { note } = Astro.props;
+const { Content } = await render(note);
+const [writing, projects] = await Promise.all([getPublishedWriting(), getProjects()]);
+const related = [
+  ...note.data.relatedWriting.map((id) => {
+    const entry = writing.find((item) => item.id === id);
+    return entry && { label: '相关文章', title: entry.data.title, href: `/writing/${entry.id}/` };
+  }),
+  ...note.data.relatedProjects.map((id) => {
+    const entry = projects.find((item) => item.id === id);
+    return entry && { label: '相关项目', title: entry.data.title, href: `/projects/${entry.id}/` };
+  }),
+].filter((item): item is NonNullable<typeof item> => Boolean(item));
+---
+
+<BaseLayout title={note.data.title} description={note.data.takeaway} active="reading" article>
+  <article class="page-content reading-detail">
+    <header>
+      <div class="eyebrow">阅读笔记</div>
+      <h1>{note.data.title}</h1>
+      <p class="author">{note.data.author}</p>
+      <p class="takeaway">{note.data.takeaway}</p>
+      <div class="mono meta"><time datetime={note.data.publishedAt.toISOString()}>{formatDate(note.data.publishedAt)}</time><span>{note.data.status === 'reading' ? `阅读中 · ${note.data.progress}%` : '已读完'}</span></div>
+    </header>
+    <div class="prose" data-pagefind-body><Content /></div>
+    <RelatedContent items={related} />
+  </article>
+</BaseLayout>
+
+<style>
+  .reading-detail { max-width: var(--reading-width); margin-inline: auto; }
+  header { padding-bottom: 2rem; margin-bottom: 2rem; border-bottom: 1px solid var(--color-line); }
+  h1 { margin: 0; font-family: var(--font-display); font-size: var(--text-2xl); letter-spacing: -0.025em; }
+  .author { margin: 0.4rem 0 1.4rem; color: var(--color-muted); }
+  .takeaway { font-size: 1.1rem; }
+  .meta { display: flex; gap: 1.25rem; color: var(--color-muted); font-size: 0.78rem; }
+</style>

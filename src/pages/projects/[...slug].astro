@@ -1,0 +1,55 @@
+---
+import { render, type CollectionEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import RelatedContent from '../../components/content/RelatedContent.astro';
+import { formatDate, getProjects, getPublishedWriting, getReadingNotes, projectStatusLabels } from '../../lib/content';
+import '../../styles/content.css';
+
+export async function getStaticPaths() {
+  const entries = await getProjects();
+  return entries.map((project) => ({ params: { slug: project.id }, props: { project } }));
+}
+
+interface Props { project: CollectionEntry<'projects'> }
+const { project } = Astro.props;
+const { Content } = await render(project);
+const [writing, readings] = await Promise.all([getPublishedWriting(), getReadingNotes()]);
+const related = [
+  ...project.data.relatedWriting.map((id) => {
+    const entry = writing.find((item) => item.id === id);
+    return entry && { label: '相关文章', title: entry.data.title, href: `/writing/${entry.id}/` };
+  }),
+  ...project.data.relatedReadings.map((id) => {
+    const entry = readings.find((item) => item.id === id);
+    return entry && { label: '阅读笔记', title: entry.data.title, href: `/reading/${entry.id}/` };
+  }),
+].filter((item): item is NonNullable<typeof item> => Boolean(item));
+---
+
+<BaseLayout title={project.data.title} description={project.data.description} active="projects">
+  <article class="page-content project-detail">
+    <header>
+      <div class="project-status">{projectStatusLabels[project.data.status]}</div>
+      <h1>{project.data.title}</h1>
+      <p class="description">{project.data.description}</p>
+      <p class="stack mono">{project.data.stack.join(' / ')}</p>
+      <div class="facts"><div><span>问题</span><strong>{project.data.problem}</strong></div><div><span>关键取舍</span><strong>{project.data.decisions.join(' · ')}</strong></div><div><span>最后更新</span><strong>{formatDate(project.data.updatedAt)}</strong></div></div>
+    </header>
+    <div class="prose" data-pagefind-body><Content /></div>
+    <RelatedContent items={related} />
+  </article>
+</BaseLayout>
+
+<style>
+  .project-detail { max-width: 1120px; }
+  header { padding-bottom: 2.5rem; margin-bottom: 2.5rem; border-bottom: 1px solid var(--color-line); }
+  .project-status { margin-bottom: 0.75rem; color: var(--color-accent); font-size: 0.82rem; }
+  h1 { margin: 0; font-family: var(--font-display); font-size: var(--text-2xl); letter-spacing: -0.025em; }
+  .description { margin: 0.7rem 0; font-size: 1.1rem; }
+  .stack { color: var(--color-muted); font-size: 0.82rem; }
+  .facts { display: grid; grid-template-columns: 1.2fr 1fr 0.65fr; gap: 2rem; margin-top: 2rem; }
+  .facts div { display: grid; gap: 0.5rem; }
+  .facts span { color: var(--color-muted); font-size: 0.78rem; }
+  .facts strong { font-size: 0.9rem; font-weight: 500; }
+  @media (max-width: 900px) { .facts { display: block; } .facts div { padding: 1rem 0; border-bottom: 1px solid var(--color-line); } }
+</style>

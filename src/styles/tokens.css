@@ -1,0 +1,50 @@
+:root {
+  --color-paper: #ffffff;
+  --color-sidebar: #f4f6f7;
+  --color-ink: #17191d;
+  --color-body: #30353b;
+  --color-muted: #68717d;
+  --color-soft: #98a0aa;
+  --color-line: #d9dde1;
+  --color-accent: #c64322;
+  --color-accent-soft: #f9ede9;
+
+  --font-display: "IBM Plex Sans Condensed", "Noto Sans SC", "Noto Sans CJK SC", "Source Han Sans SC", "PingFang SC", sans-serif;
+  --font-body: "IBM Plex Sans Condensed", "Noto Sans SC", "Noto Sans CJK SC", "Source Han Sans SC", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+
+  --sidebar-width: clamp(264px, 16vw, 320px);
+  --page-width: 1920px;
+  --page-gutter: clamp(3rem, 4vw, 8rem);
+  --reading-width: 700px;
+  --article-width: 880px;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: clamp(1.75rem, 3vw, 2.5rem);
+  --text-hero: clamp(2.25rem, 4.5vw, 3.75rem);
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (max-width: 900px) {
+  :root {
+    --text-hero: clamp(2rem, 10vw, 3rem);
+    --text-2xl: clamp(1.75rem, 8vw, 2.25rem);
+  }
+}
