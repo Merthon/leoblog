@@ -1,7 +1,7 @@
 ---
 title: 《置身事内》
 author: 兰小欢
-status: reading
+status: paused
 progress: 68
 startedAt: 2026-08-20
 publishedAt: 2026-08-28

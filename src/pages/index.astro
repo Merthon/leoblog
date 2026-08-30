@@ -3,6 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import SectionHeading from '../components/ui/SectionHeading.astro';
 import Icon from '../components/ui/Icon.astro';
 import { formatDate, getProjects, getPublishedWriting, getReadingNotes } from '../lib/content';
+import { CURRENT_STATUS, SITE } from '../config/site';
 
 const [writing, reading, projects] = await Promise.all([
   getPublishedWriting(),
@@ -41,7 +42,7 @@ const recent = [
 ].filter(Boolean);
 ---
 
-<BaseLayout title="Leo" description="一个程序员的阅读与构建记录。" active="index">
+<BaseLayout title={SITE.displayName} description={SITE.description} active="index">
   <div class="page-content home">
     <section class="feature">
       <div class="feature-label"><span>最近在想</span><span>一段正在形成的判断</span></div>
@@ -83,9 +84,7 @@ const recent = [
     <section class="mobile-now">
       <SectionHeading title="NOW" accent />
       <ul>
-        <li><span class="status-dot is-current"></span>正在构建 leo-log</li>
-        <li><span class="status-dot"></span>正在读《置身事内》</li>
-        <li><span class="status-dot"></span>通常在周末更新</li>
+        {CURRENT_STATUS.map((item) => <li><span class:list={['status-dot', { 'is-current': item.current }]}></span>{item.text}</li>)}
       </ul>
     </section>
   </div>

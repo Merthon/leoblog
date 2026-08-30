@@ -1,12 +1,13 @@
 import rss from '@astrojs/rss';
 import type { APIContext } from 'astro';
 import { getPublishedWriting } from '../lib/content';
+import { SITE, SITE_TITLE } from '../config/site';
 
 export async function GET(context: APIContext) {
   const entries = await getPublishedWriting();
   return rss({
-    title: 'Leo / Personal Log',
-    description: '一个程序员的阅读与构建记录。',
+    title: SITE_TITLE,
+    description: SITE.description,
     site: context.site ?? 'https://example.com',
     items: entries.map((entry) => ({
       title: entry.data.title,

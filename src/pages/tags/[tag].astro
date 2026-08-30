@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import WritingRow from '../../components/content/WritingRow.astro';
 import { getPublishedWriting } from '../../lib/content';
+import { SITE } from '../../config/site';
 
 export async function getStaticPaths() {
   const entries = await getPublishedWriting();
@@ -12,7 +13,7 @@ export async function getStaticPaths() {
 const { tag, entries } = Astro.props;
 ---
 
-<BaseLayout title={`标签：${tag}`} description={`Leo 关于“${tag}”的文章。`} active="writing">
+<BaseLayout title={`标签：${tag}`} description={`${SITE.displayName} 关于“${tag}”的文章。`} active="writing">
   <div class="page-content">
     <h1 class="page-title">#{tag}</h1>
     <p class="page-description">与这个主题相关的文章。</p>

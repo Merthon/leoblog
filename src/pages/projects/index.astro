@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import ProjectRow from '../../components/content/ProjectRow.astro';
 import SectionHeading from '../../components/ui/SectionHeading.astro';
 import { getProjects } from '../../lib/content';
+import { SITE } from '../../config/site';
 
 const projects = await getProjects();
 const featured = projects.find((entry) => entry.data.featured) ?? projects[0];
@@ -13,12 +14,12 @@ const featured = projects.find((entry) => entry.data.featured) ?? projects[0];
     <h1 class="page-title">项目</h1>
     <p class="page-description">把想法做成可以运行、可以验证的东西。</p>
     <section class="featured-project">
-      <span class="project-state">正在构建</span>
+      <span class="project-state">{SITE.project.status}</span>
       <h2><a href={`/projects/${featured.id}/`}>{featured.data.title}</a></h2>
       <div class="project-facts">
         <div><h3>问题</h3><p>{featured.data.problem}</p><p class="stack mono">{featured.data.stack.join(' / ')}</p></div>
         <div><h3>关键取舍</h3><ul>{featured.data.decisions.map((decision) => <li>{decision}</li>)}</ul></div>
-        <div><h3>当前状态</h3><p>第一版设计完成，准备进入开发。</p><h3 class="related-heading">关联文章</h3><a class="related-link" href="/writing/why-personal-website/">为什么个人网站值得长期维护 →</a></div>
+        <div><h3>当前状态</h3><p>正在完善第一版网站与内容结构。</p><h3 class="related-heading">关联文章</h3><a class="related-link" href="/writing/why-personal-website/">为什么个人网站值得长期维护 →</a></div>
       </div>
     </section>
     <section class="projects-index">

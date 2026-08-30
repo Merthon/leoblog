@@ -1,6 +1,11 @@
+---
+import { SITE } from '../../config/site';
+---
+
 <footer class="mobile-footer">
-  <a href="mailto:leo@example.com">Email</a>
-  <a href="https://github.com/">GitHub</a>
+  <a href={`mailto:${SITE.contact.email}`}>Email</a>
+  <a href={SITE.contact.githubUrl}>GitHub</a>
+  <a href={SITE.contact.extraLink.url}>{SITE.contact.extraLink.label}</a>
   <a href="/rss.xml">RSS</a>
 </footer>
 

@@ -1,32 +1,38 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { DISPLAY_UPDATED_AT, SITE } from '../config/site';
 ---
 
-<BaseLayout title="现在" description="Leo 最近正在做、正在读和正在思考的事情。" active="now">
+<BaseLayout title="现在" description={`${SITE.displayName} 最近正在做和正在思考的事情。`} active="now">
   <div class="page-content now-page">
     <h1 class="page-title">现在</h1>
-    <p class="updated mono">更新于 2026.08.29</p>
+    <p class="updated mono">更新于 {DISPLAY_UPDATED_AT}</p>
     <div class="now-grid">
       <section class="intro">
-        <h2>你好，我是 Leo，一名程序员。</h2>
-        <p>我喜欢把复杂的问题拆开，也喜欢通过写作检查自己的判断。这个网站记录我读过的书、做过的项目，以及一些还没有想明白的事情。</p>
-        <div class="subsection"><h3>目前关注</h3><ul><li>软件设计</li><li>写作系统</li><li>知识管理</li></ul></div>
+        <h2>你好，我是 {SITE.displayName}，一名{SITE.role}。</h2>
+        <p>{SITE.intro}</p>
+        <div class="subsection"><h3>目前关注</h3><ul>{SITE.now.focuses.map((item) => <li>{item}</li>)}</ul></div>
       </section>
       <section class="current">
-        <div><h3>正在做</h3><ul><li class="active">重构 leo-log</li><li>整理过去的读书笔记</li></ul></div>
-        <div><h3>正在读</h3><ul><li>《置身事内》</li></ul></div>
-        <div><h3>近期计划</h3><ul><li>完成第一版网站</li><li>写完项目复盘</li></ul></div>
+        <div><h3>正在做</h3><ul>{SITE.now.doing.map((item, index) => <li class:list={{ active: index === 0 }}>{item}</li>)}</ul></div>
+        {SITE.now.reading.length > 0 && <div><h3>正在读</h3><ul>{SITE.now.reading.map((item) => <li>{item}</li>)}</ul></div>}
+        <div><h3>近期计划</h3><ul>{SITE.now.plans.map((item) => <li>{item}</li>)}</ul></div>
       </section>
     </div>
     <div class="about-grid">
       <section>
         <h3>关于这个网站</h3>
-        <p>它不是作品陈列柜，而是一份持续维护的个人记录。</p>
-        <div class="principles"><h3>维护原则</h3><ul><li>内容属于自己</li><li>链接长期有效</li><li>设计保持克制</li></ul></div>
+        <p>{SITE.now.aboutSite}</p>
+        <div class="principles"><h3>维护原则</h3><ul>{SITE.now.principles.map((item) => <li>{item}</li>)}</ul></div>
       </section>
       <section class="contact">
         <h3>联系我</h3>
-        <dl><dt>Email</dt><dd><a href="mailto:leo@example.com">leo@example.com</a></dd><dt>GitHub</dt><dd><a href="https://github.com/">github.com/leo</a></dd><dt>RSS</dt><dd><a href="/rss.xml">/rss.xml</a></dd></dl>
+        <dl>
+          <dt>Email</dt><dd><a href={`mailto:${SITE.contact.email}`}>{SITE.contact.email}</a></dd>
+          <dt>GitHub</dt><dd><a href={SITE.contact.githubUrl}>github.com/{SITE.contact.githubUsername}</a></dd>
+          <dt>{SITE.contact.extraLink.label}</dt><dd><a href={SITE.contact.extraLink.url}>{SITE.contact.extraLink.url.replace('https://', '')}</a></dd>
+          <dt>RSS</dt><dd><a href="/rss.xml">/rss.xml</a></dd>
+        </dl>
       </section>
     </div>
   </div>
@@ -48,7 +54,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   li.active::before { background: var(--color-accent); }
   dl { display: grid; grid-template-columns: 5rem 1fr; gap: 0.65rem 1rem; margin: 0; font-family: var(--font-mono); font-size: 0.85rem; }
   dt { color: var(--color-muted); }
-  dd { margin: 0; }
+  dd { margin: 0; overflow-wrap: anywhere; }
   @media (max-width: 900px) {
     .now-grid, .about-grid { display: block; }
     .now-grid > section, .about-grid > section, .now-grid > section + section, .about-grid > section + section { padding: 1.75rem 0; border-left: 0; }

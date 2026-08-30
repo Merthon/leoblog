@@ -1,5 +1,6 @@
 ---
 import Icon from '../ui/Icon.astro';
+import { CURRENT_STATUS, DISPLAY_UPDATED_AT, SITE } from '../../config/site';
 
 interface Props {
   active: 'index' | 'writing' | 'reading' | 'projects' | 'now';
@@ -16,13 +17,13 @@ const nav = [
 ---
 
 <header class="mobile-header">
-  <a class="logo" href="/">LEO</a>
+  <a class="logo" href="/">{SITE.logoText}</a>
   <button type="button" data-menu-open aria-label="打开导航菜单">MENU</button>
 </header>
 
 <dialog class="mobile-menu" data-mobile-menu>
   <div class="menu-header">
-    <a class="logo" href="/">LEO</a>
+    <a class="logo" href="/">{SITE.logoText}</a>
     <button type="button" data-menu-close aria-label="关闭导航菜单">CLOSE</button>
   </div>
 
@@ -37,14 +38,12 @@ const nav = [
 
   <section class="menu-now">
     <h2>NOW</h2>
-    <p><span class="status-dot is-current"></span>正在构建 leo-log</p>
-    <p><span class="status-dot is-current"></span>正在读《置身事内》</p>
-    <p><span class="status-dot"></span>通常在周末更新</p>
+    {CURRENT_STATUS.map((item) => <p><span class:list={['status-dot', { 'is-current': item.current }]}></span>{item.text}</p>)}
   </section>
 
   <footer>
-    <div><a href="mailto:leo@example.com">Email</a><a href="https://github.com/">GitHub</a><a href="/rss.xml">RSS</a></div>
-    <p>最后更新 2026.08.29</p>
+    <div><a href={`mailto:${SITE.contact.email}`}>Email</a><a href={SITE.contact.githubUrl}>GitHub</a><a href={SITE.contact.extraLink.url}>{SITE.contact.extraLink.label}</a><a href="/rss.xml">RSS</a></div>
+    <p>最后更新 {DISPLAY_UPDATED_AT}</p>
   </footer>
 </dialog>
 

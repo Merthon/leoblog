@@ -1,6 +1,6 @@
-# leo-log
+# leoblog
 
-一个程序员的阅读与构建记录。项目使用 Astro、TypeScript 和 Content Collections 构建，默认输出纯静态站点，计划通过 Vercel 与 Git 仓库自动部署。
+一个开发人员的阅读与构建记录。项目使用 Astro、TypeScript 和 Content Collections 构建，默认输出纯静态站点，通过 Vercel 与 Git 仓库自动部署。
 
 ## 技术栈
 
@@ -59,14 +59,14 @@ docs/design/
 
 ## 部署到 Vercel
 
-初版确认后再创建 Git 仓库。仓库创建并推送后：
+仓库已经推送到 GitHub，接下来：
 
 1. 在 Vercel 中选择 **Add New → Project**。
 2. 导入 GitHub 仓库。
 3. Framework Preset 选择 **Astro**（通常会自动识别）。
 4. Build Command 使用 `pnpm build`。
 5. Output Directory 使用 `dist`。
-6. 添加环境变量：
+6. 可选：添加环境变量覆盖自动识别的生产地址：
 
    ```text
    SITE_URL=https://你的正式域名
@@ -74,10 +74,9 @@ docs/design/
 
 7. 部署完成后，后续推送到生产分支会自动发布；其他分支和 Pull Request 会生成预览部署。
 
-`SITE_URL` 会用于 canonical、RSS、robots.txt 和 sitemap。正式部署前务必替换示例联系人：
+`SITE_URL` 会用于 canonical、RSS、robots.txt 和 sitemap。未设置时，构建会优先读取 Vercel 的 `VERCEL_PROJECT_PRODUCTION_URL`；本地构建则使用示例地址。
 
-- `leo@example.com`
-- `github.com/leo`
+个人资料、联系方式与 NOW 状态统一维护在 `src/config/site.ts`。
 
 ## 目录概览
 
@@ -94,4 +93,4 @@ src/
 └── styles/
 ```
 
-当前项目尚未初始化 Git。
+GitHub 仓库：`git@github.com:Merthon/leoblog.git`。

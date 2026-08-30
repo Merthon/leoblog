@@ -1,5 +1,6 @@
 ---
 import Icon from '../ui/Icon.astro';
+import { CURRENT_STATUS, DISPLAY_UPDATED_AT, SITE } from '../../config/site';
 
 interface Props {
   active: 'index' | 'writing' | 'reading' | 'projects' | 'now';
@@ -17,9 +18,9 @@ const nav = [
 
 <aside class="sidebar">
   <div>
-    <a class="identity" href="/" aria-label="Leo 首页">
-      <strong>LEO</strong>
-      <span>一个程序员的阅读与构建记录</span>
+    <a class="identity" href="/" aria-label={`${SITE.displayName} 首页`}>
+      <strong>{SITE.logoText}</strong>
+      <span>{SITE.tagline}</span>
     </a>
 
     <nav aria-label="主导航">
@@ -34,20 +35,19 @@ const nav = [
     <section class="now-summary" aria-labelledby="sidebar-now">
       <h2 id="sidebar-now">NOW</h2>
       <ul>
-        <li><span class="status-dot is-current"></span><span>正在构建 leo-log</span></li>
-        <li><span class="status-dot"></span><span>正在读《置身事内》</span></li>
-        <li><span class="status-dot"></span><span>通常在周末更新</span></li>
+        {CURRENT_STATUS.map((item) => <li><span class:list={['status-dot', { 'is-current': item.current }]}></span><span>{item.text}</span></li>)}
       </ul>
     </section>
   </div>
 
   <footer>
     <div class="socials" aria-label="站外链接">
-      <a href="mailto:leo@example.com" aria-label="发送邮件"><Icon name="mail" /></a>
-      <a href="https://github.com/" aria-label="GitHub"><Icon name="github" /></a>
+      <a href={`mailto:${SITE.contact.email}`} aria-label="发送邮件"><Icon name="mail" /></a>
+      <a href={SITE.contact.githubUrl} aria-label="GitHub"><Icon name="github" /></a>
+      <a href={SITE.contact.extraLink.url} aria-label={SITE.contact.extraLink.label}><Icon name="x" /></a>
       <a href="/rss.xml" aria-label="RSS 订阅"><Icon name="rss" /></a>
     </div>
-    <p>最后更新 <time datetime="2026-08-29">2026.08.29</time></p>
+    <p>最后更新 <time datetime={SITE.now.updatedAt}>{DISPLAY_UPDATED_AT}</time></p>
   </footer>
 </aside>
 

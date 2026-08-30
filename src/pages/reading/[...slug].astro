@@ -13,6 +13,11 @@ export async function getStaticPaths() {
 interface Props { note: CollectionEntry<'reading'> }
 const { note } = Astro.props;
 const { Content } = await render(note);
+const statusLabel = note.data.status === 'reading'
+  ? `阅读中 · ${note.data.progress ?? 0}%`
+  : note.data.status === 'paused'
+    ? `暂时搁置${note.data.progress !== undefined ? ` · ${note.data.progress}%` : ''}`
+    : '已读完';
 const [writing, projects] = await Promise.all([getPublishedWriting(), getProjects()]);
 const related = [
   ...note.data.relatedWriting.map((id) => {
@@ -33,7 +38,7 @@ const related = [
       <h1>{note.data.title}</h1>
       <p class="author">{note.data.author}</p>
       <p class="takeaway">{note.data.takeaway}</p>
-      <div class="mono meta"><time datetime={note.data.publishedAt.toISOString()}>{formatDate(note.data.publishedAt)}</time><span>{note.data.status === 'reading' ? `阅读中 · ${note.data.progress}%` : '已读完'}</span></div>
+      <div class="mono meta"><time datetime={note.data.publishedAt.toISOString()}>{formatDate(note.data.publishedAt)}</time><span>{statusLabel}</span></div>
     </header>
     <div class="prose" data-pagefind-body><Content /></div>
     <RelatedContent items={related} />

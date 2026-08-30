@@ -33,6 +33,7 @@ const related = [
       <h1>{project.data.title}</h1>
       <p class="description">{project.data.description}</p>
       <p class="stack mono">{project.data.stack.join(' / ')}</p>
+      {project.data.repository && <a class="repository" href={project.data.repository}>查看 GitHub 仓库 →</a>}
       <div class="facts"><div><span>问题</span><strong>{project.data.problem}</strong></div><div><span>关键取舍</span><strong>{project.data.decisions.join(' · ')}</strong></div><div><span>最后更新</span><strong>{formatDate(project.data.updatedAt)}</strong></div></div>
     </header>
     <div class="prose" data-pagefind-body><Content /></div>
@@ -47,6 +48,7 @@ const related = [
   h1 { margin: 0; font-family: var(--font-display); font-size: var(--text-2xl); letter-spacing: -0.025em; }
   .description { margin: 0.7rem 0; font-size: 1.1rem; }
   .stack { color: var(--color-muted); font-size: 0.82rem; }
+  .repository { display: inline-block; margin-top: 0.25rem; color: var(--color-accent); font-size: 0.82rem; }
   .facts { display: grid; grid-template-columns: 1.2fr 1fr 0.65fr; gap: 2rem; margin-top: 2rem; }
   .facts div { display: grid; gap: 0.5rem; }
   .facts span { color: var(--color-muted); font-size: 0.78rem; }
