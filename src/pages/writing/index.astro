@@ -4,6 +4,13 @@ import WritingRow from '../../components/content/WritingRow.astro';
 import { getPublishedWriting } from '../../lib/content';
 
 const entries = await getPublishedWriting();
+const yearGroups = entries.reduce<Array<{ year: number; entries: typeof entries }>>((groups, entry) => {
+  const year = entry.data.publishedAt.getFullYear();
+  const current = groups.at(-1);
+  if (current?.year === year) current.entries.push(entry);
+  else groups.push({ year, entries: [entry] });
+  return groups;
+}, []);
 ---
 
 <BaseLayout title="文章" description="记录技术决策，也记录那些还没有标准答案的问题。" active="writing">
@@ -16,13 +23,19 @@ const entries = await getPublishedWriting();
       <button type="button" data-filter="thinking">思考</button>
       <button type="button" data-filter="essay">随笔</button>
     </div>
-    <div class="archive">
-      <div class="year-heading mono">2026</div>
-      <div class="writing-list">
-        {entries.map((entry, index) => (
-          <div data-entry-type={entry.data.type}><WritingRow entry={entry} isNew={index === 0} /></div>
-        ))}
-      </div>
+    <div class="archives">
+      {yearGroups.map((group) => (
+        <section class="archive" aria-labelledby={`year-${group.year}`}>
+          <h2 class="year-heading mono" id={`year-${group.year}`}>{group.year}</h2>
+          <div class="writing-list">
+            {group.entries.map((entry) => (
+              <div data-entry-type={entry.data.type}>
+                <WritingRow entry={entry} isNew={entry.id === entries[0]?.id} />
+              </div>
+            ))}
+          </div>
+        </section>
+      ))}
     </div>
   </div>
 </BaseLayout>
@@ -59,12 +72,16 @@ const entries = await getPublishedWriting();
   button::after { content: ""; position: absolute; right: 0; bottom: -1px; left: 0; height: 2px; background: transparent; }
   button:hover, button.active { color: var(--color-accent); }
   button.active::after { background: var(--color-accent); }
-  .archive { display: grid; grid-template-columns: 5rem minmax(0, 1fr); gap: 1.5rem; margin-top: 2rem; }
-  .year-heading { padding-top: 2.35rem; color: var(--color-muted); }
+  .archives { margin-top: 2rem; }
+  .archive { display: grid; grid-template-columns: 5rem minmax(0, 1fr); gap: 1.5rem; }
+  .archive + .archive { margin-top: 2rem; }
+  .year-heading { padding-top: 2.35rem; margin: 0; color: var(--color-muted); font-size: 0.85rem; font-weight: 400; }
   [hidden] { display: none; }
   @media (max-width: 900px) {
     .filters { justify-content: space-between; gap: 1.25rem; overflow-x: auto; }
-    .archive { display: block; margin-top: 0; }
+    .archives { margin-top: 0; }
+    .archive { display: block; }
+    .archive + .archive { margin-top: 1rem; }
     .year-heading { padding: 2rem 0 0.5rem; }
   }
 </style>
