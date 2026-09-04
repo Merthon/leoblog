@@ -4,7 +4,7 @@ description: 用于长期保存写作、阅读记录与项目复盘的个人网�
 status: building
 stack: [Astro, TypeScript, MDX]
 startedAt: 2026-08-21
-updatedAt: 2026-08-30
+updatedAt: 2026-09-04
 repository: https://github.com/Merthon/leoblog
 problem: 如何长期保存写作、阅读记录与项目复盘。
 decisions: [内容优先, 静态生成, 保持可迁移]

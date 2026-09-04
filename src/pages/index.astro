@@ -12,32 +12,31 @@ const [writing, reading, projects] = await Promise.all([
 ]);
 
 const featured = writing.find((entry) => entry.data.featured) ?? writing[0];
-const recentWriting = writing[0];
 const recentReading = reading[0];
 const recentProject = projects.find((entry) => entry.id === 'leo-log') ?? projects[0];
 const recent = [
-  recentWriting && {
-    type: '文章',
-    title: recentWriting.data.title,
-    href: `/writing/${recentWriting.id}/`,
-    date: recentWriting.data.publishedAt,
+  ...writing.map((entry) => ({
+    type: entry.data.type === 'essay' ? '随笔' : '文章',
+    title: entry.data.title,
+    href: `/writing/${entry.id}/`,
+    date: entry.data.publishedAt,
     icon: 'writing' as const,
-  },
-  recentReading && {
+  })),
+  ...reading.map((entry) => ({
     type: '阅读',
-    title: `${recentReading.data.title} 重读`,
-    href: `/reading/${recentReading.id}/`,
-    date: recentReading.data.publishedAt,
+    title: entry.data.title,
+    href: `/reading/${entry.id}/`,
+    date: entry.data.publishedAt,
     icon: 'reading' as const,
-  },
-  recentProject && {
+  })),
+  ...projects.map((entry) => ({
     type: '项目',
-    title: `${recentProject.data.title} 重构记录`,
-    href: `/projects/${recentProject.id}/`,
-    date: recentProject.data.updatedAt,
+    title: entry.data.title,
+    href: `/projects/${entry.id}/`,
+    date: entry.data.updatedAt,
     icon: 'projects' as const,
-  },
-].filter(Boolean);
+  })),
+].sort((a, b) => b.date.valueOf() - a.date.valueOf()).slice(0, 5);
 ---
 
 <BaseLayout title={SITE.displayName} description={SITE.description} active="index">
@@ -52,7 +51,7 @@ const recent = [
     <section class="updates">
       <SectionHeading title="最近更新" accent />
       <div class="update-list">
-        {recent.map((item, index) => item && (
+        {recent.map((item, index) => (
           <a class="update-row" href={item.href}>
             <time class="mono" datetime={item.date.toISOString()}>{formatDate(item.date)}</time>
             <Icon name={item.icon} size={20} />
