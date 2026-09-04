@@ -2,15 +2,18 @@
 title: "Django 学习笔记（一）：项目与应用"
 description: "从创建项目、运行开发服务器到构建第一个应用，整理 Django 入门的基础流程。"
 publishedAt: 2025-02-21
+updatedAt: 2026-09-04
 type: technical
 tags: ["Python", "Django"]
 draft: false
 readingMinutes: 4
 ---
+> **版本说明（2026-09）：** 本系列已按 Django 5.2 LTS 复核基础流程。内容源自入门阶段的学习记录；新项目请同时对照版本对应的官方教程。
+
 ## 创建项目
 建立一个 Django 项目 —— Django 实例的设置集合，包括数据库配置、Django 特定的选项和应用程序特定的设置。
 `django-admin startproject mysite`
-让我们看看startproject创建了什么：
+让我们看看`startproject` 创建了什么：
 ```bash
 djangotutorial/
     manage.py
@@ -31,7 +34,7 @@ djangotutorial/
 
 ## 运行
 `python manage.py runserver`
-服务器正在运行，请使用 Web 浏览器访问http://120.0.0.1:8000/你会看到一个 “Congratulations！” 页面，火箭起飞了。成功了！
+服务器正在运行，请使用 Web 浏览器访问http://127.0.0.1:8000/你会看到一个 “Congratulations！” 页面，火箭起飞了。成功了！
 
 ## 创建 Polls 应用程序
 要创建应用程序，请确保您与 manage.py 位于同一目录中，然后键入以下命令：
@@ -68,7 +71,7 @@ urlpatterns = [
     path("", views.index, name="index"),
 ]
 ```
-下一步是在 mysite 项目中配置全局 URLconf 以包含 polls.urls 中定义的 URLconf。为此，请在 mysite/urls.py 中添加 django.urls.include 的导入，并在 urlpatterns 列表中插入一个 include（），这样你就有：
+下一步是在 mysite 项目中配置全局 URLconf 以包含 polls.urls 中定义的 URLconf。为此，请在 mysite/urls.py 中添加 django.urls.include 的导入，并在 urlpatterns 列表中插入一个 `include()`，这样你就有：
 ```python
 from django.contrib import admin
 from django.urls import include, path
@@ -78,7 +81,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
 ]
 ```
-path（） 函数至少需要两个参数：route 和 view。include（） 函数允许引用其他 URLconf。每当 Django 遇到 include（） 时，它都会截断 URL 中匹配到该点的任何部分，并将剩余的字符串发送到包含的 URLconf 进行进一步处理。
-include（） 背后的想法是让即插即用的 URL 变得容易。由于投票在它们自己的 URLconf （polls/urls.py） 中，它们可以放在 “/polls/” 或 “/fun_polls/” 下，或 “/content/polls/” 下，或任何其他路径根目录下，应用程序仍然可以工作。
+`path()` 函数至少需要两个参数：route 和 view。`include()` 函数允许引用其他 URLconf。每当 Django 遇到 `include()` 时，它都会截断 URL 中匹配到该点的任何部分，并将剩余的字符串发送到包含的 URLconf 进行进一步处理。
+`include()` 背后的想法是让即插即用的 URL 变得容易。由于投票在它们自己的 URLconf （polls/urls.py） 中，它们可以放在 “/polls/” 或 “/fun_polls/” 下，或 “/content/polls/” 下，或任何其他路径根目录下，应用程序仍然可以工作。
 现在已经将索引视图连接到 URLconf 中
-在浏览器中转到http://120.0.0.1:8000/polls/您应该会看到文本“Hello， world.You're at the polls index.“，这是您在索引视图中定义的。
+在浏览器中转到http://127.0.0.1:8000/polls/您应该会看到文本“Hello， world.You're at the polls index.“，这是您在索引视图中定义的。

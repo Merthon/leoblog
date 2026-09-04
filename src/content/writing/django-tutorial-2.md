@@ -2,11 +2,14 @@
 title: "Django 学习笔记（二）：数据库、模型与管理后台"
 description: "记录 Django 数据库配置、模型设计、迁移命令与管理后台的使用方法。"
 publishedAt: 2025-02-21
+updatedAt: 2026-09-04
 type: technical
 tags: ["Python", "Django"]
 draft: false
 readingMinutes: 8
 ---
+> **版本说明（2026-09）：** 本系列已按 Django 5.2 LTS 复核基础流程。内容源自入门阶段的学习记录；新项目请同时对照版本对应的官方教程。
+
 1 结束的地方开始。我们将设置数据库，创建您的第一个模型，并快速介绍 Django 自动生成的管理站点。
 ## 数据库设置
 打开 mysite/settings.py。它是一个普通的 Python 模块，带有代表 Django 设置的模块级变量。

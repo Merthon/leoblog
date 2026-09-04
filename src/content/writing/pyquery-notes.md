@@ -1,8 +1,8 @@
 ---
 title: "pyquery 使用笔记"
-description: "pyquery 是一个用于网页抓取和解析的 Python 库，提供了一种类似 jQuery 的语法。"
+description: "使用 pyquery 以类 jQuery 语法解析 HTML、选择元素并读取属性。"
 publishedAt: 2025-01-11
-updatedAt: 2025-01-12
+updatedAt: 2026-09-04
 type: technical
 tags: ["Python"]
 draft: false
@@ -83,7 +83,8 @@ import requests
 from pyquery import PyQuery as pq
 
 # 发送请求获取网页内容
-response = requests.get('http://example.com')
+response = requests.get('https://example.com', timeout=10)
+response.raise_for_status()
 html = response.text
 
 # 解析网页

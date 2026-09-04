@@ -1,7 +1,8 @@
 ---
 title: "Go Web 开发：Gin 框架笔记"
-description: "以项目实践梳理 Gin 的路由、参数绑定、中间件、模板渲染与常见开发方式。"
+description: "以项目实践梳理 Gin 的路由、参数绑定、中间件、模板渲染与测试。"
 publishedAt: 2025-07-28
+updatedAt: 2026-09-04
 type: technical
 tags: ["Go", "Gin"]
 draft: false

@@ -1,7 +1,8 @@
 ---
 title: "urllib 使用笔记"
-description: "urllib 是 Python 标准库中用于处理 URL（Uniform Resource Locator）的模块，它提供了一系列功能来访问、解析、以及操作 URL。"
+description: "整理 Python 标准库 urllib 的请求、参数编码、响应处理与异常捕获。"
 publishedAt: 2025-01-07
+updatedAt: 2026-09-04
 type: technical
 tags: ["Python", "爬虫"]
 draft: false

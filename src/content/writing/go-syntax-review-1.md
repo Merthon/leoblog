@@ -1,237 +1,167 @@
 ---
 title: "Go 语法复习（一）"
-description: "复习 Go 程序结构、变量、数据类型、流程控制及常用基础语法。"
+description: "复习 Go 程序入口、变量、常量、多返回值、指针与 defer 的基础语法。"
 publishedAt: 2025-07-21
+updatedAt: 2026-09-04
 type: technical
 tags: ["Go", "基础语法"]
 draft: false
-readingMinutes: 5
+readingMinutes: 4
 ---
-## 一个简单的mian函数
+
+这篇笔记集中复习 Go 最容易混淆的基础语法。所有完整示例都可以用 `go run` 执行，并应先通过 `gofmt` 格式化。
+
+## 程序入口
+
+可执行程序使用 `package main`，并声明一个不带参数和返回值的 `main` 函数：
+
 ```go
 package main
 
 import "fmt"
 
 func main() {
-     fmt.Println("Hello World")
+    fmt.Println("Hello, world")
 }
 ```
-go run: 是指直接编译go语言并执行应用程序，一步完成
-go build: 先编译，后执行
 
-## 变量的声明
-##### 单个变量
-声明变量一般是使用关键字var
-- 第一种： 制定变量类型，声明后若不赋值，使用默认值0
-   var v_name v_type
-   v_name = value
-- 第二种：根据值自行判定来变量类型
-   var v_name = value
-- 第三种：省去var，使用 := 来
-   v_name := value
-###### 多变量声明
-示例代码：
+```bash
+go run .      # 编译并立即运行当前包
+go build .    # 编译当前包，保留可执行文件
+gofmt -w .    # 格式化当前目录中的 Go 文件
+```
+
+## 变量与零值
+
 ```go
 package main
 
 import "fmt"
 
-var x, y int
-var (  //这种分解的写法，一般用于声明全局变量
-       a int
-       b bool
-)
-
-var c, d int = 1, 2
-var e, f = 123, "merthon"
-// 不带声明格式的只能在函数体里面实现
-
-func mian() {
-       g, h := 123, "这种在func函数体里实现"
-       fmt.Println(a, b, c, d, e, f, g, h)
-
-       _, value := 7, 5 //7的赋值被废弃，_不具备读特性
-       fmt.Println(value) //5
-}
-```
-## 常量
-常量是一个简单值的标识符，在程序运行时，不会被修改的值
-常量的数据类型只可以是布尔型，数字型，和字符串型
-定义格式：
-```go
-const indentifier [type] = value
-```
-可以省去类型说明符[type]
-- 显式类型定义
-- 隐式类型定义
-```go
-package main
-
-import "fmt"
+var enabled bool // 包级变量，零值为 false
 
 func main() {
-    const LENGTH = 10
-    const WIDTH = 5
-    var area int
-    const a, b, c = 1, false, "str"
+    var count int        // 零值为 0
+    name := "Leo"        // 短变量声明，只能在函数内使用
+    width, height := 8, 6
 
-    area = LENGTH * WIDTH
-	fmt.Printf("面积为：%d\n", area)
-	println(a, b, c)
+    fmt.Println(enabled, count, name, width*height)
 }
 ```
 
-常量还可以拿来做枚举
+`:=` 至少要声明一个当前作用域中的新变量。只赋值、不声明时使用 `=`。
+
+Go 常见零值包括：数值为 `0`，布尔值为 `false`，字符串为 `""`，指针、切片、映射、通道和函数为 `nil`。
+
+## 常量与 iota
+
 ```go
+package main
+
+import "fmt"
+
+type Status int
+
 const (
-    Unknow = 0
-    Female = 1
-    Male = 2
-)
-```
-常量可以用len(),cap(), unsafe.Sizeof()常量计算表达式的值，常量表达式中，函数必须是内置函数，否则编译不过：
-```go
-package main
-
-import "unsafe"
-const (
-    a = "abc"
-    b = len(a)
-    c = unsafe.Sizeof(a)
+    StatusUnknown Status = iota
+    StatusReady
+    StatusRunning
 )
 
 func main() {
-    println(a, b, c)
+    const width, height = 8, 6
+    fmt.Println(width*height, StatusRunning)
 }
-//输出结果为abc, 3, 16
 ```
-unsafe.Sizeof(a)输出是16，字符串类型在go里面是个结构，包含指向底层数组的指针和长度，这两部分每部分都是8个字节，所以字符串大小为16个字节。
-## 函数
-##### 函数返回多个值
-Go函数可以返回多个值，例如：
+
+常量可以是布尔值、字符串和数值。`iota` 在每个 `const` 声明块中从 0 开始递增，适合定义一组相关常量。
+
+`unsafe.Sizeof` 返回变量本身占用的字节数，不包含它引用的底层数据，而且结果可能随目标架构变化。字符串内容长度使用 `len(s)`；它返回字节数，不是 Unicode 字符数。
+
+## 多返回值与错误
+
+```go
+package main
+
+import (
+    "errors"
+    "fmt"
+)
+
+func divide(a, b float64) (float64, error) {
+    if b == 0 {
+        return 0, errors.New("division by zero")
+    }
+    return a / b, nil
+}
+
+func main() {
+    result, err := divide(10, 2)
+    if err != nil {
+        fmt.Println("error:", err)
+        return
+    }
+    fmt.Println(result)
+}
+```
+
+Go 通常把 `error` 作为最后一个返回值。调用方应在继续使用结果前检查错误。
+
+## 值传递与指针
+
+Go 的参数都是值传递。传入指针时，复制的是地址，因此函数可以修改地址指向的值：
+
 ```go
 package main
 
 import "fmt"
 
-func swap(x, y string) (string, string) {
-    return y, x
+func swap(x, y *int) {
+    *x, *y = *y, *x
 }
 
 func main() {
-    a, b = swap("Mahesh", "Kumer")
-    fmt.println(a, b)
-}
-//Kumer Mahesh
-```
-##### init函数与import
-init函数：可以在package main中，也可以在其他的package中，同一个中可以出现多次。
-main函数：只能在package main中。
-##### 函数参数
-函数如果使用参数，该变量可以称为函数的形参，就像是定义在函数体里的局部变量。
-调用函数，可以使用2种方式来传递参数：
-###### 值传递
-值传递是指在调用函数的时候将实际参数复制一份传递到函数中，这样在函数中如果对参数进行修改，将不会影响到实际参数。
-默认情况，Go使用的就是值传递，在调用过程中不会影响到实际参数。
-```go
-func swap(x, y int) int {
-    var temp int
+    a, b := 100, 200
+    fmt.Printf("before: a=%d b=%d\n", a, b)
 
-    temp = x //保存x
-    x = y  //将y赋值给x
-    y = temp //将temp 赋值给y
-
-    return temp
-}
-```
-使用值传递：
-```go
-package main
-
-import "fmt"
-
-func main() {
-    var a int = 100
-    var b int = 200
-
-    fmt.printf("交换前a：%d\n", a)
-    fmt.printf("交换前b：%d\n", b)
-
-    swap(a, b)
-
-    fmt.printf("交换后a：%d\n", a)
-    fmt.printf("交换后b：%d\n", b)
-}
-```
-###### 引用传递（指针传递）
-###### 指针
-Go语言的取地址符是& ，放到一个变量之前使用就会返回相应变量的内存地址。
-```go
-package main
-
-import "fmt"
-
-func main() {
-    var a int = 10
-
-    fmt.printf("变量的地址：%d\n"， &a)
-}
-//变量的地址：10818a220
-```
-引用传递是指在调用函数时将实际参数的地址传递到函数中，那么函数中对参数所进行的修改，将影响到实际参数。
-引用传递指针参数传递到函数内，比如：
-```go
-func swap(x *int, y *int){
-    var temp int
-
-    temp = *x //保存x地址上的值
-    *x = *y  //将y赋值给x
-    *y = temp //将temp 赋值给y
-
-    return temp
-```
-使用引用传递：
-```go
-package main
-
-import "fmt"
-
-func main() {
-    var a int = 100
-    var b int = 200
-
-    fmt.printf("交换前a：%d\n", a)
-    fmt.printf("交换前b：%d\n", b)
-
-    /*
-    &a 指向a指针，a变量的地址
-    &b 指向b指针，b变量的地址
-    */
     swap(&a, &b)
 
-    fmt.printf("交换后a：%d\n", a)
-    fmt.printf("交换后b：%d\n", b)
+    fmt.Printf("after:  a=%d b=%d\n", a, b)
+    fmt.Printf("address of a: %p\n", &a)
 }
 ```
-## defer
-defer被用于预定对一个函数的调用，可以把这类被defer语句调用的函数称为延迟函数。
-defer的作用：
-- 释放占用的资源
-- 捕捉处理异常
-- 输出日志
-如果一个函数中有多个defer语句，会以后进先出的顺序执行。
+
+指针能表达“函数需要修改调用方的值”，但不要为了避免复制而默认到处使用指针。切片、映射和通道本身已经是小型描述符，语义也与普通值不同。
+
+## init 与 defer
+
+一个包可以声明多个 `init` 函数，它们在包初始化阶段运行。业务代码通常更适合显式初始化，避免把复杂逻辑藏进 `init`。
+
+`defer` 在当前函数返回前执行，多个 `defer` 按后进先出顺序运行：
+
 ```go
-func Demo() {
-    defer fmt.Println("1")
-    defer fmt.Println("2")
-    defer fmt.Println("3")
-    defer fmt.Println("4")
-    defer fmt.Println("5")
+package main
+
+import "fmt"
+
+func demo() {
+    defer fmt.Println("third")
+    defer fmt.Println("second")
+    fmt.Println("first")
 }
 
 func main() {
-    Demo()
+    demo()
 }
 ```
-###### recover错误拦截
+
+输出顺序是 `first`、`second`、`third`。`defer` 常用于关闭文件、释放锁或记录函数结束，但仍要处理 `Close` 可能返回的错误。
+
+## panic 与 recover
+
+`panic` 表示程序无法在当前路径继续。普通业务错误优先返回 `error`。`recover` 只有在延迟函数中才能捕获当前 goroutine 的 panic，通常放在进程边界或框架中统一记录；不要用它代替正常错误处理。
+
+## 参考
+
+- [Go 语言规范](https://go.dev/ref/spec)
+- [Effective Go](https://go.dev/doc/effective_go)

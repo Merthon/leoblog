@@ -1,7 +1,8 @@
 ---
 title: "GoProbe：用 Go 构建轻量级服务器探针"
-description: "GoProbe 是一个使用 Go 编写的简易服务器探针，目标是通过 Web 界面实时展示服务器状态，包括系统信息、内存使用、磁盘使用和运行时信息等，适合作为个人服务器状态面板或学习 Gol……"
+description: "复盘 GoProbe 服务器探针的目录结构、系统信息采集和页面展示。"
 publishedAt: 2025-07-28
+updatedAt: 2026-09-04
 type: technical
 tags: ["Go", "练习项目"]
 draft: false

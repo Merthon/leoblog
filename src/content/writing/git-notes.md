@@ -1,115 +1,92 @@
 ---
 title: "Git 使用笔记"
-description: "Git是一个开源的分布式版本控制系统，用于敏捷高效地处理任何项目。"
+description: "整理 Git 的工作区、暂存区、提交、分支与远程协作常用命令。"
 publishedAt: 2024-11-14
+updatedAt: 2026-09-04
 type: technical
 tags: ["Git"]
 draft: false
-readingMinutes: 2
+readingMinutes: 3
 ---
-## Git笔记
 
-#### 1.概述
+Git 是分布式版本控制系统。每次提交保存的是项目状态和父提交关系，不只是一个“修改文件列表”。理解工作区、暂存区和提交，比背命令更重要。
 
-  Git是一个开源的分布式版本控制系统，用于敏捷高效地处理任何项目。
-
-#### 2.配置
-
-###### 2.1 用户信息配置
+## 初始配置
 
 ```bash
-$ git config --global user.name "名称"
-$ git config --global user.email 邮箱
+git config --global user.name "Your Name"
+git config --global user.email "you@example.com"
+git config --global init.defaultBranch main
+git config --list --show-origin
 ```
 
-  如果用了**--global**选项，那么配置文件就在用户主目录下，以后所有项目就会默认使用这里配置的用户信息。
+`--global` 写入当前用户配置。公司与个人身份不同时，可以在具体仓库中省略 `--global`，覆盖用户名和邮箱。
 
-  新的设定保存在~/.gitconfig文件里
+## 三个区域
 
-###### 2.2 查看配置
-
-``` bash
-$ git config --list
-```
-
-
-#### 3.Git工作流程
-
-+ 克隆Git资源作为工作目录。
-+ 在克隆的资源上添加或者修改文件。
-+ 如果其他人修改了你可以更新资源。
-+ 在提交前查看修改。
-+ 提交
-+ 修改完成后，如果发现错误，可以撤回提交再次修改并提交。
-
-#### 4. 工作区，暂存区，版本库
-
-+ 工作区：就是在自己电脑看的见的目录
-+ 暂存区：英文叫stage或index，一般存放在.git目录中的index（.git/index）中，也叫索引。
-+ 版本库：隐藏目录.git，是Git的版本库。
-
-#### 5.实际操作
-
-##### 5.1 初始化仓库
-
-要使用git进行版本控制，必须初始化仓库。
+- **工作区**：磁盘上正在编辑的文件。
+- **暂存区**：下一次提交准备包含的快照，也叫 index。
+- **版本库**：`.git` 中保存的对象、引用和历史。
 
 ```bash
-git init
+git status --short
+git diff             # 工作区与暂存区
+git diff --staged    # 暂存区与 HEAD
+git log --oneline --decorate --graph
 ```
 
-  初始化成功之后就会在执行git init命令的目录下生成一个.git目录，这个目录存储着管理当前目录内容所需要的仓库数据。在git中我们把这个内容叫做：***附属于该仓库的工作树***
+提交前同时看 `git diff` 与 `git diff --staged`，可以避免漏提交或误提交。
 
-##### 5.2 查看仓库状态
+## 创建一次提交
 
-工作树和仓库在被操作的过程中，状态是不断发生变化的，随时查看状态
-
-``` bash
-git status
+```bash
+git add path/to/file
+git diff --staged
+git commit -m "feat: add article search"
 ```
 
-##### 5.3 暂存区添加文件
+`git add .` 会暂存当前目录下所有变化，方便但范围较大。混合修改较多时，使用明确路径或 `git add -p` 分块选择。
 
-  要想让文件成为Git仓库的管理对象，就需要将其加入暂存区中，暂存区是提交之前的一个临时区域。
+提交应该是可解释、可验证的最小完整变化。不要把密钥、`.env`、构建产物和临时日志提交进仓库。
 
-``` bash
-git add .
+## 分支
+
+```bash
+git switch -c feature/search
+git branch --show-current
+git switch main
+git merge --no-ff feature/search
 ```
 
-##### 5.4 保存仓库历史记录
+`git switch` 专门切换分支，语义比承担多种职责的 `git checkout` 更清楚。
 
-``` bash
-git commit
+## 远程仓库
+
+```bash
+git remote -v
+git fetch origin
+git pull --ff-only
+git push -u origin main
 ```
 
-git commit可以将当前暂存区的文件实际保存到仓库的历史记录中
+- `fetch` 只下载远程引用，不修改工作区。
+- `pull` 等于获取后再整合；`--ff-only` 可以避免意外生成合并提交。
+- 第一次推送使用 `-u` 建立上游关系，以后直接 `git push`。
 
-``` bash
-git commit -m "frist commit"
+默认分支不一定叫 `main`。执行推送前用 `git branch --show-current` 和 `git remote -v` 确认目标。
+
+## 撤销时先判断是否共享
+
+```bash
+git restore path/to/file          # 丢弃未暂存修改
+git restore --staged path/to/file # 取消暂存，保留工作区修改
+git commit --amend                # 修改尚未共享的最近提交
+git revert <commit>               # 用新提交撤销已共享提交
 ```
 
--m参数后的"frist commit"叫做提交信息，是对这个提交的概述。(*提交信息要有意义！)
+`restore` 和 `reset --hard` 都可能丢失未保存内容，执行前先看 `git status` 和 diff。已经推送给他人使用的历史优先 `revert`，不要随意强制改写。
 
-##### 5.4 提交日志
+## 参考
 
-  ``` bash
-  git log
-  ```
-
-可以看以往仓库中提交的日志
-
-##### 5.5 查看更改差别
-
-``` bash
-git diff
-```
-
-git diff命令可以查看工作树，暂存区，最新提交的差别。
-
-在执行git commit命令之前先执行git diff HEAD命令，查看本次提交与上次提交有什么差别，等确认之后在提交。（HEAD是指向当前分支中最新的一次提交的指针）5.6
-
-##### 5.6 推送至Github
-
-~~~ bash
-git push -u origin master
-~~~
+- [Pro Git](https://git-scm.com/book/zh/v2)
+- [Git 命令参考](https://git-scm.com/docs)

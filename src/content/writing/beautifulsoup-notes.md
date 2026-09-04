@@ -1,7 +1,8 @@
 ---
 title: "BeautifulSoup 使用笔记"
-description: "BeautifulSoup 是一个非常流行的 Python 库，用于从 HTML 或 XML 文档中提取数据。"
+description: "整理 BeautifulSoup 的解析器、元素查找、属性读取和 CSS 选择器用法。"
 publishedAt: 2025-01-07
+updatedAt: 2026-09-04
 type: technical
 tags: ["Python", "爬虫"]
 draft: false
@@ -16,7 +17,8 @@ from bs4 import BeautifulSoup
 
 # 获取网页内容
 url = 'http://example.com'
-response = requests.get(url)
+response = requests.get(url, timeout=10)
+response.raise_for_status()
 
 # 创建 BeautifulSoup 对象
 soup = BeautifulSoup(response.content, 'html.parser')
@@ -83,7 +85,8 @@ from bs4 import BeautifulSoup
 
 # 获取网页内容
 url = 'http://example.com'
-response = requests.get(url)
+response = requests.get(url, timeout=10)
+response.raise_for_status()
 
 # 创建 BeautifulSoup 对象
 soup = BeautifulSoup(response.content, 'html.parser')

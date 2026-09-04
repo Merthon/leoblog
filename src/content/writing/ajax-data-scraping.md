@@ -1,7 +1,8 @@
 ---
 title: "Ajax 数据爬取"
-description: "Ajax 数据爬取是一个常见的任务，特别是当目标网站使用 JavaScript 动态加载数据时。"
+description: "分析浏览器中的 Ajax 请求，并用 Requests、Selenium 或 Scrapy 读取动态数据。"
 publishedAt: 2025-01-11
+updatedAt: 2026-09-04
 type: technical
 tags: ["Python"]
 draft: false
@@ -39,7 +40,8 @@ params = {
     'key': 'value',  # 请求的查询参数
 }
 
-response = requests.get(url, headers=headers, params=params)
+response = requests.get(url, headers=headers, params=params, timeout=10)
+response.raise_for_status()
 data = response.json()  # 如果返回的是 JSON 格式的数据
 print(data)
 ```
@@ -68,7 +70,8 @@ cookies = {
     'sessionid': 'your-session-id',
     'csrftoken': 'your-csrf-token'
 }
-response = requests.get(url, headers=headers, cookies=cookies)
+response = requests.get(url, headers=headers, cookies=cookies, timeout=10)
+response.raise_for_status()
 ```
 ### 处理返回数据
 Ajax 请求返回的数据通常是 JSON 格式，你可以使用 Python 的 `json` 模块进行解析：
@@ -101,6 +104,6 @@ class AjaxSpider(scrapy.Spider):
             yield {'title': item['title'], 'url': item['url']}
 ```
 ## 常见问题
-- **反爬机制**：一些网站可能会使用验证码、IP 限制等反爬措施。你可能需要使用代理池、验证码识别或者增加请求的随机性来绕过这些限制。
+- **访问限制**：遇到验证码、401、403 或 429 时，应停止请求并检查授权、服务条款和限流规则，不要通过代理或伪装绕过限制。
 - **动态内容加载**：有些网站通过不断滚动或分页加载内容。你需要模拟滚动行为，或者发送带有分页参数的 Ajax 请求。
-爬取 Ajax 数据的关键是分析页面中的网络请求，提取 Ajax 请求的 URL 和参数，并模拟这些请求来获取数据。
+采集 Ajax 数据的关键是找到页面实际调用的公开接口，理解请求参数和响应结构，并在授权范围内稳定调用。

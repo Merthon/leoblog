@@ -1,112 +1,125 @@
 ---
 title: "JavaScript 学习笔记（二）"
-description: "JavaScript02 函数作为值来传递以及如何使用函数表达式 写一个包含三个参数的函数 ask(question, yes, no)： question 关于问题的文本 yes 当回答……"
+description: "理解函数表达式、回调与箭头函数，并区分箭头函数和普通函数的 this 语义。"
 publishedAt: 2023-06-01
+updatedAt: 2026-09-04
 type: technical
-tags: []
+tags: ["JavaScript"]
 draft: false
-readingMinutes: 4
+readingMinutes: 3
 ---
-JavaScript02
-## 函数（补漏）
-### 回调函数
-函数作为值来传递以及如何使用函数表达式
-写一个包含三个参数的函数 `ask(question, yes, no)`：
-`question`
-关于问题的文本
-`yes`
-当回答为 “Yes” 时，要运行的脚本
-`no`
-当回答为 “No” 时，要运行的脚本
-函数需要提出 `question`（问题），并根据用户的回答，调用 `yes()` 或 `no()`：
+
+JavaScript 函数可以赋值给变量、作为参数传递，也可以从另一个函数返回。这种“函数也是值”的特性，是回调、高阶函数和事件处理的基础。
+
+## 回调函数
+
+```js
+function ask(question, onConfirm, onCancel) {
+  if (window.confirm(question)) {
+    onConfirm();
+  } else {
+    onCancel();
+  }
+}
+
+function showConfirmed() {
+  window.alert("You agreed.");
+}
+
+function showCanceled() {
+  window.alert("You canceled the operation.");
+}
+
+ask("Do you agree?", showConfirmed, showCanceled);
 ```
-<script>
-"use strict";
-function ask(question, yes, no) {
-  if (confirm(question)) yes()
-  else no();
-}
-function showOk() {
-  alert( "You agreed." );
-}
-function showCancel() {
-  alert( "You canceled the execution." );
-}
-// 用法：函数 showOk 和 showCancel 被作为参数传入到 ask
-ask("Do you agree?", showOk, showCancel);
-</script>
-```
-`ask` 的两个参数值 `showOk` 和 `showCancel` 可以被称为 **回调函数** 或简称 **回调**。
-主要思想是我们传递一个函数，并期望在稍后必要时将其“回调”。
-使用函数表达式来编写一个等价的、更简洁的函数：
-```
-<script>
-"use strict";
-function ask(question, yes, no) {
-  if (confirm(question)) yes()
-  else no();
-}
+
+`ask` 接收两个函数，并在得到结果后调用其中一个。传入函数时不要写括号：`showConfirmed` 表示函数本身，`showConfirmed()` 表示立即执行并传入返回值。
+
+也可以直接传入匿名函数：
+
+```js
 ask(
   "Do you agree?",
-  function() { alert("You agreed."); },
-  function() { alert("You canceled the execution."); }
+  function () {
+    window.alert("You agreed.");
+  },
+  function () {
+    window.alert("You canceled the operation.");
+  },
 );
-</script>
 ```
-直接在 `ask(...)` 调用内进行函数声明。这两个函数没有名字，所以叫 **匿名函数**。这样的函数在 `ask` 外无法访问（因为没有对它们分配变量）
 
-### 箭头函数
-创建函数还有另外一种非常简单的语法，并且这种方法通常比函数表达式更好。
-它被称为“箭头函数”，因为它看起来像这样：
-~~~
-let func = (arg1, arg2, ..., argN) => expression;
-~~~
-这里创建了一个函数 `func`，它接受参数 `arg1..argN`，然后使用参数对右侧的 `expression` 求值并返回其结果。
-换句话说，它是下面这段代码的更短的版本：
-~~~
-let func = function(arg1, arg2, ..., argN) {
-     return expression;
- };
-~~~
-看一个具体的例子：
-~~~
-let sum = (a,b) => a + b;
-/* 这个箭头函数是下面这个函数的更短的版本：
-let sum = function(a, b) {
-return a + b;
+回调不一定是异步的。数组的 `map`、`filter` 也会同步调用回调。
+
+## 箭头函数
+
+只有一个表达式时，会隐式返回结果：
+
+```js
+const sum = (a, b) => a + b;
+const double = (value) => value * 2;
+
+console.log(sum(1, 2));
+console.log(double(3));
+```
+
+使用花括号后，必须显式 `return`：
+
+```js
+const sum = (a, b) => {
+  const result = a + b;
+  return result;
 };
-*/
-alert( sum(1, 2) ); // 3
-~~~
-可以看到 `(a, b) => a + b` 表示一个函数接受两个名为 `a` 和 `b` 的参数。在执行时，它将对表达式 `a + b` 求值，并返回计算结果。
-如果我们只有一个参数，还可以省略掉参数外的圆括号，使代码更短:
-~~~
-let double = n => n * 2;
-// 差不多等同于：let double = function(n) { return n * 2 }
-alert( double(3) ); // 6
-~~~
-如果没有参数，括号则是空的（但括号必须保留）：
-~~~
-let sayHi = () => alert("Hello!");
-sayHi();
-~~~
-箭头函数可以像函数表达式一样使用。
-~~~
-let age = prompt("What is your age?", 18);
-let welcome = (age < 18) ?
-  () => alert('Hello!') :
-  () => alert("Greetings!");
-welcome();
-~~~
-### 多行的箭头函数
-更复杂一点的函数，比如带有多行的表达式或语句。在这种情况下，我们可以使用花括号将它们括起来。主要区别在于，用花括号括起来之后，需要包含 `return` 才能返回值（就像常规函数一样）。
-~~~
-let sum = (a, b) => { // 花括号表示开始一个多行函数
-let result = a + b; _return result; // 如果我们使用了花括号，那么我们需要一个显式的 “return”
+```
+
+返回对象字面量时需要圆括号，否则花括号会被解析成函数体：
+
+```js
+const createUser = (name) => ({ name, active: true });
+```
+
+## 箭头函数与 this
+
+箭头函数没有自己的 `this`、`arguments` 和 `prototype`。它会捕获外层作用域的 `this`，适合数组处理和需要保留外层上下文的回调；需要动态 `this` 或作为构造函数时，使用普通函数。
+
+```js
+const counter = {
+  value: 0,
+  incrementLater() {
+    setTimeout(() => {
+      this.value += 1;
+      console.log(this.value);
+    }, 100);
+  },
 };
-alert( sum(1, 2) ); // 3
-~~~
-### 总结
-箭头函数对于简单的操作很方便，特别是对于单行的函数。它具体有两种形式：
-1.  不带花括号：`(...args) => expression` —— 右侧是一个表达式：函数计算表达式并返回其结果。如果只有一个参数，则可以省略括号，例如 `n => n*2`。
-2.  带花括号：`(...args) => { body }` —— 花括号允许我们在函数中编写多个语句，但是我们需要显式地 `return` 来返回一些内容。
+
+counter.incrementLater();
+```
+
+这里的箭头函数沿用 `incrementLater` 方法中的 `this`。如果把回调改成普通函数，`this` 的值会由调用方式决定。
+
+## 异步回调的错误处理
+
+`try...catch` 不能捕获未来某次回调里抛出的错误。现代异步 API 更常使用 Promise 与 `async/await`：
+
+```js
+async function loadProfile() {
+  const response = await fetch("/api/profile");
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
+try {
+  const profile = await loadProfile();
+  console.log(profile);
+} catch (error) {
+  console.error(error);
+}
+```
+
+## 参考
+
+- [MDN：函数](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Guide/Functions)
+- [MDN：箭头函数表达式](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Functions/Arrow_functions)

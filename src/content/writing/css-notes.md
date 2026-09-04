@@ -2,6 +2,7 @@
 title: "CSS 学习笔记"
 description: "整理 CSS 选择器、盒模型、布局、定位与常用样式属性。"
 publishedAt: 2023-05-26
+updatedAt: 2026-09-04
 type: technical
 tags: ["CSS"]
 draft: false

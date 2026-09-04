@@ -1,7 +1,8 @@
 ---
 title: "正则表达式笔记"
-description: "正则表达式（Regular Expression，简称 Regex）是一种用于文本匹配、查找和替换的强大工具。"
+description: "整理正则表达式中的字符集、量词、边界、分组与常见匹配模式。"
 publishedAt: 2025-01-08
+updatedAt: 2026-09-04
 type: technical
 tags: ["正则表达式"]
 draft: false

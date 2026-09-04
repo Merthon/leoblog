@@ -1,158 +1,88 @@
 ---
 title: "基于 JWT 的模拟登录"
-description: "JWT（JSON Web Token） 的模拟登录通常用于无状态认证系统，尤其是在 RESTful API 和现代 web 应用中，广泛用于替代传统的基于 Session 的身份验证机制。"
+description: "在获得授权的 API 客户端中获取、使用和刷新 JWT，并说明令牌存储与验证边界。"
 publishedAt: 2025-01-09
+updatedAt: 2026-09-04
 type: technical
-tags: ["Python", "爬虫", "模拟登录"]
+tags: ["Python", "认证", "JWT"]
 draft: false
-readingMinutes: 6
+readingMinutes: 4
 ---
-**JWT（JSON Web Token）** 的模拟登录通常用于无状态认证系统，尤其是在 RESTful API 和现代 web 应用中，广泛用于替代传统的基于 Session 的身份验证机制。JWT 是一种轻量级的认证机制，通常由服务器在用户登录时生成，并作为认证凭据返回给客户端。客户端通过存储和发送 JWT 来进行后续的身份验证。
-## JWT 的基本原理
-WT 是由三部分组成的：
 
-1. **Header**：指定 JWT 的类型（通常是 JWT）以及签名算法（如 HS256）。
-2. **Payload**：包含声明（Claims），通常包括用户的基本信息（如 `user_id`）和过期时间（`exp`）。这些信息是未加密的，可以被任何人读取，但不能篡改。
-3. **Signature**：使用密钥对 Header 和 Payload 进行签名，以防止数据被篡改。
-##### WT 工作流程：
+JWT 是一种令牌格式，不等于完整的认证方案。常见 JWT 由 Header、Payload 和 Signature 三部分组成。Payload 默认只是 Base64URL 编码，**不是加密数据**，不要放密码、密钥或不必要的个人信息。
 
-1. 用户使用用户名和密码发送请求进行登录。
-2. 服务器验证用户信息后，生成一个包含用户信息的 JWT，并返回给客户端。
-3. 客户端将 JWT 存储在本地（通常存储在 `localStorage` 或 `sessionStorage` 中，或者作为 HTTP cookie）。
-4. 客户端在后续请求中将 JWT 放入请求头中，以便服务器验证该请求是否来自已认证的用户。
-## 基于 JWT 的模拟登录实现步骤
-主要步骤包括：
+> 下面的客户端示例只用于你拥有或明确获准自动访问的 API。验证码、多因素认证和访问限制属于安全边界，不应绕过。
 
-- 向登录接口发送用户名和密码请求。
-- 服务器验证成功后返回 JWT。
-- 将 JWT 存储并用于后续请求中的身份验证。
-### 发送 POST 请求获取 JWT
-首先，向服务器的登录 API 发送 POST 请求，提交用户名和密码。
+## 服务端必须验证什么
+
+收到 JWT 后，服务端不能只解析 Payload，还要验证：
+
+- 签名算法是否在明确的允许列表中；不能相信令牌自己声明的任意算法。
+- 签名、过期时间 `exp`、生效时间 `nbf`。
+- 签发方 `iss` 和受众 `aud` 是否与当前系统一致。
+- 账号、会话或令牌是否已经撤销，尤其是高风险操作。
+
+Access Token 应短期有效。Refresh Token 生命周期更长，需要轮换、撤销与重放检测。
+
+## 浏览器中的存储
+
+不要把 Session ID、Access Token 或 Refresh Token 长期放在 `localStorage` 或 `sessionStorage`；同源脚本一旦发生 XSS，就能直接读取这些值。浏览器应用通常更适合使用 `Secure`、`HttpOnly`、`SameSite` Cookie，或者由 BFF（Backend for Frontend）代管令牌。
+
+如果使用 Cookie，仍需根据请求模型处理 CSRF。`SameSite` 是纵深防御，不替代所有 CSRF 防护。
+
+## Python API 客户端示例
+
+凭据从环境变量读取，令牌只保存在当前进程内：
+
 ```python
+import os
 import requests
 
-# 登录接口 URL
-login_url = 'https://example.com/api/login'
+BASE_URL = "https://api.example.com"
+USERNAME = os.environ["APP_USERNAME"]
+PASSWORD = os.environ["APP_PASSWORD"]
+TIMEOUT = (3.05, 15)
 
-# 用户名和密码
-login_data = {
-    'username': 'your_username',
-    'password': 'your_password',
-}
+with requests.Session() as session:
+    login_response = session.post(
+        f"{BASE_URL}/login",
+        json={"username": USERNAME, "password": PASSWORD},
+        timeout=TIMEOUT,
+    )
+    login_response.raise_for_status()
 
-# 发送 POST 请求进行登录
-response = requests.post(login_url, json=login_data)
+    payload = login_response.json()
+    access_token = payload["access_token"]
 
-# 检查登录是否成功
-if response.ok:
-    # 解析返回的 JSON 响应，提取 JWT
-    token = response.json().get('token')
-    print("登录成功，获取到的 JWT:", token)
-else:
-    print("登录失败")
+    response = session.get(
+        f"{BASE_URL}/profile",
+        headers={"Authorization": f"Bearer {access_token}"},
+        timeout=TIMEOUT,
+    )
+    response.raise_for_status()
+    print(response.json())
 ```
-### 使用 JWT 访问受保护的资源
-一旦获取到 JWT，下一步是将其用于后续的身份验证。在每个请求中，JWT 会被放置在请求头的 `Authorization` 字段中。
+
+不要打印令牌，也不要把令牌写进异常信息、URL 查询参数或公开日志。
+
+## 刷新令牌
+
+刷新接口和字段名由服务端决定。客户端应在收到明确的 401 响应后尝试刷新一次，成功后替换旧令牌；再次失败就回到登录流程，避免无限重试。
+
 ```python
-# 需要访问的受保护资源 URL
-protected_url = 'https://example.com/api/protected_resource'
-
-# 请求头包含 JWT
-headers = {
-    'Authorization': f'Bearer {token}',
-}
-
-# 发送 GET 请求，访问受保护的资源
-protected_response = requests.get(protected_url, headers=headers)
-
-# 打印受保护页面的内容
-if protected_response.ok:
-    print("成功访问受保护资源")
-    print(protected_response.json())  # 假设返回的是 JSON 数据
-else:
-    print("访问受保护资源失败")
-```
-### 处理 JWT 过期
-JWT 通常会设置过期时间（`exp`），如果 JWT 过期，服务器会拒绝请求。在这种情况下，客户端通常需要使用 **刷新 token（refresh token）** 来获取新的 JWT。
-### 刷新 JWT（如果支持刷新 token）
-如果服务器提供刷新功能，你可以通过刷新 token 获取新的 JWT。在刷新过程中，通常会提供一个刷新 token（通常是一个长期有效的 token），你可以使用它来获取新的 JWT。
-```python
-# 刷新 token 接口 URL
-refresh_url = 'https://example.com/api/refresh_token'
-
-# 发送请求刷新 JWT
-refresh_data = {
-    'refresh_token': 'your_refresh_token',
-}
-refresh_response = requests.post(refresh_url, json=refresh_data)
-
-# 处理刷新结果
-if refresh_response.ok:
-    # 获取新的 JWT
-    new_token = refresh_response.json().get('token')
-    print("JWT 已刷新，新的 token:", new_token)
-else:
-    print("刷新 JWT 失败")
+def refresh_access_token(session: requests.Session, refresh_token: str) -> str:
+    response = session.post(
+        f"{BASE_URL}/token/refresh",
+        json={"refresh_token": refresh_token},
+        timeout=TIMEOUT,
+    )
+    response.raise_for_status()
+    return response.json()["access_token"]
 ```
 
-## demo
-```python
-import requests
+Refresh Token 比 Access Token 更敏感。真实系统应支持轮换，并在使用新令牌后立即废弃旧令牌。
 
-# 登录接口 URL
-login_url = 'https://example.com/api/login'
-# 受保护资源接口 URL
-protected_url = 'https://example.com/api/protected_resource'
-# 刷新 token 接口 URL
-refresh_url = 'https://example.com/api/refresh_token'
+## 参考
 
-# 用户名和密码
-login_data = {
-    'username': 'your_username',
-    'password': 'your_password',
-}
-
-# 发送 POST 请求进行登录，获取 JWT
-response = requests.post(login_url, json=login_data)
-
-if response.ok:
-    token = response.json().get('token')
-    print("登录成功，获取到的 JWT:", token)
-else:
-    print("登录失败")
-    exit()
-
-# 使用 JWT 访问受保护资源
-headers = {
-    'Authorization': f'Bearer {token}',
-}
-protected_response = requests.get(protected_url, headers=headers)
-
-if protected_response.ok:
-    print("成功访问受保护资源")
-    print(protected_response.json())
-else:
-    print("访问受保护资源失败")
-
-    # 如果遇到 JWT 过期，尝试刷新 JWT
-    refresh_data = {
-        'refresh_token': 'your_refresh_token',
-    }
-    refresh_response = requests.post(refresh_url, json=refresh_data)
-
-    if refresh_response.ok:
-        new_token = refresh_response.json().get('token')
-        print("JWT 已刷新，新的 token:", new_token)
-
-        # 使用新的 token 再次访问受保护资源
-        headers['Authorization'] = f'Bearer {new_token}'
-        protected_response = requests.get(protected_url, headers=headers)
-
-        if protected_response.ok:
-            print("成功访问受保护资源（刷新后）")
-            print(protected_response.json())
-        else:
-            print("访问受保护资源失败（刷新后）")
-    else:
-        print("刷新 JWT 失败")
-```
+- [OWASP Session Management Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)
+- [OWASP HTML5 Security Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/HTML5_Security_Cheat_Sheet.html)

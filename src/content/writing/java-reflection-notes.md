@@ -1,7 +1,8 @@
 ---
 title: "Java高级：反射（Reflect）笔记"
-description: "是在运行状态中，对于任意一个类，都能够知道这个类的所有属性和方法； 对于任意一个对象，都能够调用它的任意属性和方法； 这种动态获取信息以及动态调用对象方法的功能称为 Java 语言的反射机制。"
+description: "整理 Java 反射中的 Class、构造器、字段、方法与访问控制。"
 publishedAt: 2022-07-08
+updatedAt: 2026-09-04
 type: technical
 tags: ["Java高级", "Java", "笔记"]
 draft: false

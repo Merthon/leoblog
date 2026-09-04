@@ -1,12 +1,15 @@
 ---
 title: "VS Code 使用配置"
-description: "整理个人 VS Code 配置，覆盖 Git、编辑器外观、格式化以及 Python、Go 和 Web 开发。"
+description: "整理个人 VS Code 配置，覆盖 Git、编辑器外观、格式化及 Python、Go 和 Web 开发。"
 publishedAt: 2025-08-04
+updatedAt: 2026-09-04
 type: technical
 tags: ["工具", "配置", "VS Code"]
 draft: false
 readingMinutes: 8
 ---
+> **维护说明（2026-09）：** 这是个人配置快照。VS Code 与扩展会持续调整设置项；复制前先确认对应扩展已安装，并让编辑器的设置校验提示决定哪些字段仍然有效。
+
 VScode自用配置
 ```json
 {

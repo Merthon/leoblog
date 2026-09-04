@@ -1,104 +1,122 @@
 ---
 title: "HTTPX 使用笔记"
-description: "httpx 是一个用于 Python 的高性能 HTTP 客户端库，支持异步操作，是 requests 的现代替代品，功能更强大，特别适合处理异步任务和 HTTP/2。"
+description: "整理 HTTPX 的同步与异步客户端、超时、状态检查、代理和 HTTP/2 配置。"
 publishedAt: 2025-01-05
+updatedAt: 2026-09-04
 type: technical
-tags: ["Python", "爬虫"]
+tags: ["Python", "HTTP"]
 draft: false
 readingMinutes: 4
 ---
-`httpx` 是一个用于 Python 的高性能 HTTP 客户端库，支持异步操作，是 `requests` 的现代替代品，功能更强大，特别适合处理异步任务和 HTTP/2。
-### **基本用法**
-#### **1. 同步请求**
-`httpx` 的用法类似 `requests`，可以轻松发起同步 HTTP 请求。
+
+HTTPX 同时提供同步与异步 API，并支持连接池、HTTP/2、流式响应和细粒度超时。一次性请求可以使用顶层函数；同一服务有多次请求时，应复用 `Client`。
+
+## 安装
+
+```bash
+python -m pip install httpx
+```
+
+## 同步客户端
+
 ```python
 import httpx
 
-response = httpx.get('https://jsonplaceholder.typicode.com/posts/1')
-print(response.status_code)  # 状态码
-print(response.json())       # 返回 JSON 数据
+with httpx.Client(
+    base_url="https://httpbin.org",
+    timeout=httpx.Timeout(10.0, connect=3.0),
+    follow_redirects=True,
+) as client:
+    response = client.get("/get", params={"page": 1})
+    response.raise_for_status()
+    print(response.json())
 ```
-支持的基本方法：
-- `httpx.get(url, ...)`
-- `httpx.post(url, ...)`
-- `httpx.put(url, ...)`
-- `httpx.delete(url, ...)`
-#### **2. 异步请求**
-`httpx` 支持异步操作，通过 `async` 和 `await` 发起请求。
+
+HTTPX 默认带有超时，但生产代码仍应显式配置符合业务需求的值。`raise_for_status()` 会把 4xx 和 5xx 响应转成异常，避免把失败页面当成正常数据处理。
+
+## 发送 JSON 和文件
+
 ```python
-import httpx
+with httpx.Client(timeout=10.0) as client:
+    response = client.post(
+        "https://httpbin.org/post",
+        json={"name": "Leo"},
+    )
+    response.raise_for_status()
+```
+
+上传文件时用上下文管理器关闭文件句柄：
+
+```python
+with open("example.txt", "rb") as file:
+    response = httpx.post(
+        "https://httpbin.org/post",
+        files={"file": ("example.txt", file, "text/plain")},
+        timeout=30.0,
+    )
+    response.raise_for_status()
+```
+
+## 代理
+
+旧版本示例常见的 `proxies={...}` 已不适用于当前 API。单一代理使用 `proxy`：
+
+```python
+with httpx.Client(proxy="http://127.0.0.1:8080") as client:
+    response = client.get("https://example.com")
+    response.raise_for_status()
+```
+
+按协议或域名分流时，使用 `mounts` 和 `HTTPTransport`。只应连接可信代理，因为代理能够观察请求元数据，错误配置还可能泄露凭据。
+
+## 异步并发
+
+复用一个 `AsyncClient`，不要为每个 URL 新建连接池：
+
+```python
 import asyncio
-
-async def fetch_data():
-    async with httpx.AsyncClient() as client:
-        response = await client.get('https://jsonplaceholder.typicode.com/posts/1')
-        print(response.json())
-
-asyncio.run(fetch_data())
-```
-### **高级用法**
-
-#### **1. 设置超时**
-```python
-response = httpx.get('https://example.com', timeout=10.0)
-```
-2.设置自定义 Headers
-```python
-headers = {'User-Agent': 'MyApp/1.0'}
-response = httpx.get('https://example.com', headers=headers)
-```
-3.发送 JSON 数据
-```python
-payload = {"key": "value"}
-response = httpx.post('https://httpbin.org/post', json=payload)
-print(response.json())
-```
-4.使用代理
-```python
-proxies = {
-    "http": "http://127.0.0.1:8080",
-    "https": "http://127.0.0.1:8080",
-}
-response = httpx.get('https://example.com', proxies=proxies)
-```
-5.处理 Cookies
-```python
-cookies = {"session_id": "123456"}
-response = httpx.get('https://example.com', cookies=cookies)
-```
-6.发送文件
-```python
-files = {'file': ('example.txt', open('example.txt', 'rb'))}
-response = httpx.post('https://httpbin.org/post', files=files)
-```
-### **异步并发请求**
-
-利用 `httpx.AsyncClient` 和 `asyncio.gather` 实现高效并发：
-```python
 import httpx
-import asyncio
 
-async def fetch(url):
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url)
-        return response.json()
+URLS = [
+    "https://httpbin.org/get?page=1",
+    "https://httpbin.org/get?page=2",
+    "https://httpbin.org/get?page=3",
+]
 
-async def main():
-    urls = [
-        'https://jsonplaceholder.typicode.com/posts/1',
-        'https://jsonplaceholder.typicode.com/posts/2',
-        'https://jsonplaceholder.typicode.com/posts/3',
-    ]
-    results = await asyncio.gather(*(fetch(url) for url in urls))
+async def fetch(client: httpx.AsyncClient, url: str) -> dict:
+    response = await client.get(url)
+    response.raise_for_status()
+    return response.json()
+
+async def main() -> None:
+    limits = httpx.Limits(max_connections=10)
+    async with httpx.AsyncClient(timeout=10.0, limits=limits) as client:
+        results = await asyncio.gather(*(fetch(client, url) for url in URLS))
     print(results)
 
 asyncio.run(main())
 ```
-### **HTTP/2 支持**
 
-`httpx` 支持 HTTP/2，无需额外设置：
-```python
-async with httpx.AsyncClient(http2=True) as client:
-    response = await client.get('https://http2.pro/')
-    print(response.http_version)  # 应显示 'HTTP/2'
+并发上限需要根据目标服务的限流规则调整，不是越大越好。
+
+## HTTP/2
+
+HTTP/2 依赖是可选安装项：
+
+```bash
+python -m pip install 'httpx[http2]'
 ```
+
+```python
+with httpx.Client(http2=True) as client:
+    response = client.get("https://example.com")
+    print(response.http_version)
+```
+
+启用 HTTP/2 不代表每次请求都会使用它；客户端和服务器协商后也可能回退到 HTTP/1.1。
+
+## 参考
+
+- [HTTPX Client](https://www.python-httpx.org/advanced/clients/)
+- [HTTPX 代理配置](https://www.python-httpx.org/advanced/proxies/)
+- [HTTPX HTTP/2 支持](https://www.python-httpx.org/http2/)

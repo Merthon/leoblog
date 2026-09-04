@@ -1,7 +1,8 @@
 ---
 title: "Parsel 使用笔记"
-description: "parsel 是一个 Python 库，主要用于 HTML 和 XML 数据的解析，特别适用于 Web 爬虫的开发。"
+description: "整理 Parsel 的 Selector、CSS 选择器、XPath 与数据提取方法。"
 publishedAt: 2025-01-10
+updatedAt: 2026-09-04
 type: technical
 tags: ["Python", "爬虫"]
 draft: false

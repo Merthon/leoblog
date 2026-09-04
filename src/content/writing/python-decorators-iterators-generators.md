@@ -1,7 +1,8 @@
 ---
 title: "Python 装饰器、迭代器与生成器"
-description: "装饰器是一种设计模式，它允许你在不修改函数或方法代码的前提下，动态地扩展函数或方法的功能。"
+description: "梳理 Python 装饰器、迭代器与生成器的工作方式和常见写法。"
 publishedAt: 2025-01-14
+updatedAt: 2026-09-04
 type: technical
 tags: ["Python"]
 draft: false

@@ -1,7 +1,8 @@
 ---
 title: "Java高级：类加载器（ClassLoader）笔记"
-description: "类加载器就是负责将.class 文件（实际存储到硬盘上的一些理文件）加载到内存中"
+description: "整理 Java 类加载过程、类加载器层级、双亲委派与常见使用边界。"
 publishedAt: 2022-07-06
+updatedAt: 2026-09-04
 type: technical
 tags: ["Java高级", "Java", "笔记"]
 draft: false

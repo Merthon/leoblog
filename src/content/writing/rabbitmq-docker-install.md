@@ -1,49 +1,70 @@
 ---
 title: "RabbitMQ 安装"
-description: "记录使用 Docker 启动 RabbitMQ 及其管理界面的基本配置。"
+description: "使用 Docker 启动 RabbitMQ 4 管理版，并配置本地端口、持久化卷和独立账号。"
 publishedAt: 2025-01-04
+updatedAt: 2026-09-04
 type: technical
 tags: ["RabbitMQ", "Docker"]
 draft: false
 readingMinutes: 2
 ---
-## 拉取 RabbitMQ 镜像
-```shell
-docker pull rabbitmq:management
+
+> 本文按 RabbitMQ 4 官方管理镜像重新整理，适合本地开发环境。
+
+## 准备账号
+
+新建 `.env`，不要继续使用默认的 `guest/guest`：
+
+```dotenv
+RABBITMQ_DEFAULT_USER=app
+RABBITMQ_DEFAULT_PASS=replace-with-a-strong-password
 ```
-`rabbitmq:management` 镜像包含 RabbitMQ 和一个基于浏览器的管理界面，推荐使用。
-## 启动 RabbitMQ 容器
-```shell
-docker run -d --name rabbitmq \
-  -p 5672:5672 \
-  -p 15672:15672 \
-  -v /Users/chenx/Workspace/rabbitmq-data:/var/lib/rabbitmq \
-  rabbitmq:management
+
+```bash
+printf '%s\n' '.env' >> .gitignore
+chmod 600 .env
 ```
-- `--name rabbitmq`：容器名称为 `rabbitmq`。
-- `-p 5672:5672`：映射 AMQP 通信端口。
-- `-p 15672:15672`：映射管理界面端口。
-- `-v /Users/chenx/Workspace/rabbitmq-data:/var/lib/rabbitmq`：将 RabbitMQ 数据存储在指定路径下。
-## 验证安装是否成功
-##### **访问 RabbitMQ 管理界面：**
-打开浏览器并访问 http://localhost:15672。
-默认的用户名和密码是：
-- **用户名**: `guest`
-- **密码**: `guest`
-## 使用 Docker 命令直接管理
-可以通过 `docker exec` 在容器中直接执行 RabbitMQ 管理命令，无需进入容器交互式 shell。例如：
-```shell
-docker exec rabbitmq rabbitmqctl add_user <username> <password>
-docker exec rabbitmq rabbitmqctl set_user_tags <username> administrator
-docker exec rabbitmq rabbitmqctl set_permissions -p / <username> ".*" ".*" ".*"
+
+## 创建容器
+
+```bash
+docker pull rabbitmq:4-management
+
+docker run -d \
+  --name rabbitmq \
+  --restart unless-stopped \
+  --env-file .env \
+  -p 127.0.0.1:5672:5672 \
+  -p 127.0.0.1:15672:15672 \
+  -v rabbitmq-data:/var/lib/rabbitmq \
+  rabbitmq:4-management
 ```
-## 注意事项
-**删除默认用户**
-- 在生产环境中，建议删除默认的 `guest` 用户以提高安全性：
-```shell
-rabbitmqctl delete_user guest
+
+- `5672` 是 AMQP 端口。
+- `15672` 是 Web 管理界面端口。
+- 两个端口都只绑定到本机。
+
+打开 `http://127.0.0.1:15672`，使用 `.env` 中的账号登录。
+
+## 检查状态
+
+```bash
+docker ps --filter name=rabbitmq
+docker logs --tail 50 rabbitmq
+docker exec rabbitmq rabbitmq-diagnostics check_running
 ```
-- **虚拟主机的权限管理**
-  如果使用多个虚拟主机，需要单独为每个虚拟主机分配权限。
-- **密码安全**
-  使用强密码，并限制暴露的管理端口访问权限。
+
+## 权限与上线注意事项
+
+需要多个应用时，为每个应用创建独立用户和虚拟主机，并只授予必要权限。生产环境还要配置 TLS、备份、监控和网络访问控制，不应把管理端口直接暴露到公网。
+
+```bash
+docker exec rabbitmq rabbitmqctl add_vhost app
+docker exec rabbitmq rabbitmqctl set_permissions -p app app '.*' '.*' '.*'
+```
+
+命令中的第一个 `app` 是虚拟主机，第二个 `app` 是用户名。
+
+## 参考
+
+- [RabbitMQ Docker 官方镜像](https://hub.docker.com/_/rabbitmq/)

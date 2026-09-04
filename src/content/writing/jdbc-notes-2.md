@@ -1,201 +1,136 @@
 ---
 title: "JDBC 学习笔记（二）"
-description: "记录 JDBC 配置文件、连接工具类、预编译语句与事务操作等实践。"
+description: "使用参数化查询、密码哈希与显式事务编写更安全的 JDBC 数据访问代码。"
 publishedAt: 2022-07-27
+updatedAt: 2026-09-04
 type: technical
-tags: ["MySQL", "Java", "笔记"]
+tags: ["MySQL", "Java", "JDBC", "安全"]
 draft: false
-readingMinutes: 6
+readingMinutes: 5
 ---
-#### 1. JDBC 工具类的抽取
 
-##### 1.1 配置文件
+这一篇处理 JDBC 中更容易出问题的部分：SQL 注入、密码验证、事务和异常边界。
 
-在 src 下创建 config.properties 文件
+## 参数化查询
+
+不要把用户输入拼进 SQL：
+
+```java
+String unsafeSql = "SELECT * FROM users WHERE login_name = '" + loginName + "'";
+```
+
+攻击者可以构造特殊输入改变语句结构。正确做法是固定 SQL 结构，把数据绑定为参数：
+
+```java
+String sql = """
+    SELECT id, login_name, password_hash
+    FROM users
+    WHERE login_name = ?
+    """;
+
+try (PreparedStatement statement = connection.prepareStatement(sql)) {
+    statement.setString(1, loginName);
+
+    try (ResultSet result = statement.executeQuery()) {
+        if (result.next()) {
+            String encodedHash = result.getString("password_hash");
+            // 在应用层使用专用密码哈希库验证输入。
+        }
+    }
+}
+```
+
+`PreparedStatement` 能保护**参数值**，但表名、列名和排序方向不能作为普通参数绑定。动态标识符必须来自代码中的允许列表，不能直接接受用户输入。
+
+## 密码不能放进 WHERE 条件
+
+下面这种查询即使使用了占位符，也代表数据库里保存的是可直接比较的密码：
+
+```sql
+SELECT * FROM users WHERE login_name = ? AND password = ?
+```
+
+正确流程是：
+
+1. 只按规范化后的登录名查询用户。
+2. 取出 `password_hash`。
+3. 在应用层使用 Argon2id、scrypt 或兼容系统中的 bcrypt 验证。
+4. 验证成功后再建立会话。
+
+PreparedStatement 解决 SQL 注入，不解决密码存储。
+
+## 显式事务
+
+多个写操作必须一起成功或一起失败时，关闭自动提交：
+
+```java
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+
+public void transfer(Connection connection, long from, long to, long amount)
+        throws SQLException {
+    boolean originalAutoCommit = connection.getAutoCommit();
+    connection.setAutoCommit(false);
+
+    try {
+        debit(connection, from, amount);
+        credit(connection, to, amount);
+        connection.commit();
+    } catch (SQLException error) {
+        try {
+            connection.rollback();
+        } catch (SQLException rollbackError) {
+            error.addSuppressed(rollbackError);
+        }
+        throw error;
+    } finally {
+        connection.setAutoCommit(originalAutoCommit);
+    }
+}
+
+private void debit(Connection connection, long id, long amount)
+        throws SQLException {
+    String sql = """
+        UPDATE accounts
+        SET balance = balance - ?
+        WHERE id = ? AND balance >= ?
+        """;
+
+    try (PreparedStatement statement = connection.prepareStatement(sql)) {
+        statement.setLong(1, amount);
+        statement.setLong(2, id);
+        statement.setLong(3, amount);
+        if (statement.executeUpdate() != 1) {
+            throw new SQLException("account missing or insufficient balance");
+        }
+    }
+}
+```
+
+真实转账还需要锁、隔离级别、幂等键、金额单位和审计设计。示例只说明 JDBC 事务结构。
+
+## 异常处理
+
+- 不要只调用 `printStackTrace()` 后继续返回 `null`，这会把真正错误拖到更远的位置。
+- 在数据访问边界记录 SQL 操作名称、请求 ID 和耗时，不记录密码、Token 或完整敏感参数。
+- 回滚失败应作为 suppressed exception 保留。
+- 把可恢复错误与编程错误分开，避免对所有 `SQLException` 无条件重试。
+
+## 配置与资源
+
+环境变量适合本地示例；生产环境使用密钥管理服务。应用通常注入 `DataSource`，由连接池统一管理 URL、凭据、连接超时和健康检查。
 
 ```properties
-driverClass=com.mysql.jdbc.Driver
-url=jdbc:mysql://localhost:3306/db1
-username=root
-password=数据库密码
+DB_URL=jdbc:mysql://127.0.0.1:3306/app
+DB_USERNAME=app
+DB_PASSWORD=replace-with-a-secret
 ```
 
-##### 1.2 工具类的抽取
+`.env` 和本地 properties 文件应加入 `.gitignore`。仓库里只保留不含真实凭据的模板。
 
-对于 JDBC 工具类的抽取实现步骤有以下几步
+## 参考
 
-- 1.私有构造方法
-- 2.声明配置信息变量
-- 3.提供静态代码块，读取配置文件信息为变量赋值，注册驱动
-- 4.提供获取数据库连接的方法
-- 5.提供释放资源的方法
-
-##### 1.3 代码实现
-
-```java
-package com.xxxxxchen.JDBC02.utils;
-
-import java.io.InputStream;
-import java.sql.*;
-import java.util.Properties;
-
-/**
- * JDBC工具类
- *
- * @author KevinWilliams*/
-public class JDBCUtils {
-    /**1.私有化构造方法*/
-    private JDBCUtils(){}
-
-    /**2.声明所需要的配置变量*/
-    private static String url;
-    private static String username;
-    private static String password;
-    private static Connection con;
-    /*3.提供静态代码块，读取配置文件信息为变量赋值，注册驱动*/
-    static {
-        try {
-            //读取配置文件信息为变量赋值
-            InputStream is = JDBCUtils.class.getClassLoader().getResourceAsStream("config.properties");
-            Properties prop = new Properties();
-            prop.load(is);
-
-            //driverClass = prop.getProperty("driverClass");
-            url = prop.getProperty("url");
-            username = prop.getProperty("username");
-            password = prop.getProperty("password");
-
-            //注册驱动
-            // Class.forName(driverClass);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-    /**4.提供获取数据库连接的方法*/
-    public static Connection getConnection(){
-        try {
-            con = DriverManager.getConnection(url,username,password);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return con;
-    }
-    /**5.提供释放资源的方法*/
-    public static void close(Connection con, Statement stat, ResultSet sr){
-        if(con!= null){
-            try {
-                con.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-        if(stat!= null){
-            try {
-                stat.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-        if(sr!= null){
-            try {
-                sr.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-    public static void close(Connection con, Statement stat){
-        if(con!= null){
-            try {
-                con.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-        if(stat!= null){
-            try {
-                stat.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-}
-```
-
-#### 2. SQL 注入攻击
-
-##### 2.1 什么是 sql 注入攻击
-
-就是利用 sql 语句的漏洞来进行对系统攻击，比如说在一个登录界面，输入一个错误的用户名或密码，也可以登录成功
-
-##### 2.2 sql 注入攻击原理
-
-- 按照正常道理来说，我们在密码处输入的所有内容，都应该认为是密码的组成
-- 但是现在 Statement 对象在执行 sql 语句时，将一部分内容当做查询条件来执行了
-
-##### 2.3 PreparedStatement 解决攻击
-
-- PreparedStatement 的介绍
-
-​ PreparedStatement 就是预编译 sql 语句的执行者对象。在执行 sql 语句之前，将 sql 语句进行提前编译。明确 sql 语句的格式后，就不会改变了。剩余的内容都会认为是参数！参数使用?作为占位符
-
-- 为参数赋值的方法：setXxx(参数 1,参数 2);
-
-​ 参数 1：?的位置编号(编号从 1 开始)
-
-​ 参数 2：?的实际参数
-
-- 执行 sql 语句的方法
-
-​ 执行 insert、update、delete 语句：int executeUpdate();
-
-​ 执行 select 语句：ResultSet executeQuery();
-
-##### 2.4 使用 PreparedStatement
-
-```java
-/*
-	 使用PreparedStatement的登录方法，解决注入攻击
-*/
-@Override
-public User findByLoginNameAndPassword(String loginName, String password) {
-    //定义必要信息
-    Connection conn = null;
-    PreparedStatement pstm = null;
-    ResultSet rs = null;
-    User user = null;
-    try {
-        //1.获取连接
-        conn = JDBCUtils.getConnection();
-        //2.创建操作SQL对象
-        String sql = "SELECT * FROM user WHERE loginname=? AND password=?";
-        pstm = conn.prepareStatement(sql);
-        //3.设置参数
-        pstm.setString(1,loginName);
-        pstm.setString(2,password);
-        System.out.println(sql);
-        //4.执行sql语句，获取结果集
-        rs = pstm.executeQuery();
-        //5.获取结果集
-        if (rs.next()) {
-            //6.封装
-            user = new User();
-            user.setUid(rs.getString("uid"));
-            user.setUcode(rs.getString("ucode"));
-            user.setUsername(rs.getString("username"));
-            user.setPassword(rs.getString("password"));
-            user.setGender(rs.getString("gender"));
-            user.setDutydate(rs.getDate("dutydate"));
-            user.setBirthday(rs.getDate("birthday"));
-            user.setLoginname(rs.getString("loginname"));
-        }
-        //7.返回
-        return user;
-    }catch (Exception e){
-        throw new RuntimeException(e);
-    }finally {
-        JDBCUtils.close(conn,pstm,rs);
-    }
-}
-```
+- [Java JDBC Transactions](https://docs.oracle.com/javase/tutorial/jdbc/basics/transactions.html)
+- [OWASP SQL Injection Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html)
+- [OWASP Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html)

@@ -1,14 +1,17 @@
 ---
 title: "分布式微博爬虫与 API"
-description: "WeiboScraper是采用Python后端开发和爬虫能力设计的一个项目，目标是爬取微博公开的话题数据，存下来做简单分析，再通过API提供查询功能。"
+description: "复盘一个微博话题采集与查询 API 练习项目的架构、存储和任务流。"
 publishedAt: 2025-03-14
+updatedAt: 2026-09-04
 type: technical
 tags: ["Python", "爬虫", "API"]
 draft: false
 readingMinutes: 7
 ---
+> **维护说明（2026-09）：** 这是一份历史架构练习。平台接口、页面结构和访问规则可能已经变化；实现前应优先使用官方 API，只采集已获授权的公开数据，并设置限速、删除与审计机制。
+
 ## 前言
-   WeiboScraper是采用Python后端开发和爬虫能力设计的一个项目，目标是爬取微博公开的话题数据，存下来做简单分析，再通过API提供查询功能。
+WeiboScraper 是一个结合 Python 后端与网页采集的练习项目，目标是爬取微博公开的话题数据，存下来做简单分析，再通过API提供查询功能。
 
 ## 需求分析
 ### 目标需求

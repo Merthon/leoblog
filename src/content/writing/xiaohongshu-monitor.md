@@ -1,12 +1,15 @@
 ---
 title: "用 Python 构建小红书用户动态监控系统"
-description: "该项目的目的是监控小红书用户的动态笔记，自动进行点赞和评论互动。"
+description: "复盘一个小红书动态监控练习项目的模块划分、状态存储与任务调度。"
 publishedAt: 2025-02-11
+updatedAt: 2026-09-04
 type: technical
 tags: ["爬虫", "Python"]
 draft: false
 readingMinutes: 22
 ---
+> **维护说明（2026-09）：** 这是一份历史练习项目复盘，不是可直接运行的成品。第三方平台接口、页面结构和自动化规则会变化；不要自动点赞、评论或规避访问限制，只处理已获授权的数据。
+
 ## 项目说明
 该项目的目的是监控小红书用户的动态笔记，自动进行点赞和评论互动。通过配置灵活的参数，可以对不同的用户进行实时互动，同时利用大语言模型（LLM）生成个性化的高情商评论。该项目主要面向开发者，帮助他们实现自动化的社交互动，提高用户参与度和互动效果。
 ## 文件结构
@@ -108,7 +111,8 @@ class WecomMessage:
                 "duplicate_check_interval": 1800 # 重复消息的检查间隔（单位：秒），这里设置为 30 分钟
             }
             # # 向 Webhook URL 发送 POST 请求，携带消息体
-            response = requests.post(self.webhook_url,json=message)
+            response = requests.post(self.webhook_url, json=message, timeout=10)
+            response.raise_for_status()
             result = response.json() # 解析返回的 JSON 响应
 
             # 如果返回的 errcode 为 0，则表示发送成功

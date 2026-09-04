@@ -1,50 +1,54 @@
 ---
 title: "Redis 安装"
-description: "记录使用 Docker 拉取、启动并连接 Redis 的基本步骤。"
+description: "使用 Docker 启动 Redis 8，配置本地访问、AOF 持久化与数据卷。"
 publishedAt: 2025-01-03
+updatedAt: 2026-09-04
 type: technical
 tags: ["Redis", "Docker"]
 draft: false
 readingMinutes: 2
 ---
-## 安装
-运行以下命令从 Docker Hub 获取最新的 Redis 镜像：
-```shell
-docker pull redis:latest
-```
-## 创建 Redis 容器
-```shell
+
+> 本文按 Redis 8 官方镜像重新整理。下面的无密码配置只适合绑定在本机的开发环境。
+
+## 创建容器
+
+```bash
+docker pull redis:8
+
 docker run -d \
   --name redis \
-  -p 6379:6379 \
-  -v /Users/chenx/Workspace/redis-data:/data \
-  redis:latest \
-  redis-server --save 60 1 --loglevel warning
+  --restart unless-stopped \
+  -p 127.0.0.1:6379:6379 \
+  -v redis-data:/data \
+  redis:8 \
+  redis-server --appendonly yes
 ```
-##### 参数解释：
-- `-d`：以守护进程方式运行容器。
-- `--name redis`：为容器指定名称为 `redis`。
-- `-p 6379:6379`：将宿主机的 6379 端口映射到容器的 6379 端口。
-- `-v /Users/chenx/Workspace/redis-data:/data`：将 Redis 的数据存储在指定目录中，方便持久化。
-- `redis:latest`：使用最新的 Redis 镜像。
-- `redis-server --save 60 1 --loglevel warning`：启动 Redis 服务器并配置保存和日志级别参数。
-## 验证安装
-```shell
-docker ps
+
+- 使用 `redis:8` 固定主版本，避免 `latest` 带来的跨版本变化。
+- 端口只绑定到 `127.0.0.1`，不会直接暴露给局域网或公网。
+- `--appendonly yes` 开启 AOF 持久化；是否同时配置 RDB，应根据恢复目标决定。
+
+## 验证连接
+
+```bash
+docker ps --filter name=redis
+docker logs --tail 50 redis
+docker exec -it redis redis-cli ping
 ```
-### 进入 Redis 容器使用 `redis-cli`
-Redis 容器自带 `redis-cli` 工具，你可以直接进入容器运行：
-```shell
-docker exec -it redis sh
-```
-在容器内，运行以下命令：
-```shell
-redis-cli
-```
-你可以通过 `ping` 命令测试：
-```shell
-127.0.0.1:6379> ping
+
+正常响应是：
+
+```text
 PONG
 ```
-退出容器
-exit
+
+## 生产环境注意事项
+
+Redis 官方镜像为了方便容器网络访问，会关闭 protected mode。只要把端口映射到外部地址，就必须额外配置认证、TLS、网络访问控制和最小权限 ACL。不要只依赖一个简单密码保护公网 Redis。
+
+数据卷也不是备份。上线前需要明确 RPO/RTO，验证快照或备份文件能否恢复。
+
+## 参考
+
+- [Redis Docker 官方镜像](https://hub.docker.com/_/redis)

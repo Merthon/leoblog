@@ -1,63 +1,72 @@
 ---
 title: "用户密码的安全存储"
-description: "明文就是直接存储密码，这样有很大的风险，比如数据泄露，被人攻击等问题。"
+description: "说明密码哈希、盐、工作因子与算法选择，并给出 Go 中使用 bcrypt 的兼容示例。"
 publishedAt: 2024-06-24
+updatedAt: 2026-09-04
 type: technical
-tags: []
+tags: ["安全", "Go"]
 draft: false
 readingMinutes: 3
 ---
-##### 为什么不能明文存储密码？
-明文就是直接存储密码，这样有很大的风险，比如数据泄露，被人攻击等问题。所以为了避免这些问题，我们需要对密码进行加密存储。
-##### 非明文存储密码
-###### 哈希算法
-密码哈希是一种将密码转换为固定长度字符串的技术，这个字符串与原始密码完全不同且不可逆。
-###### 盐值
-盐值(salt)是指在进行密码哈希之前，向密码添加的一段随机数据。通常被添加到密码的开头或结尾，或者插入到密码的某个位置。其主要目的是确保即使两个用户拥有相同的密码，最终存储在数据库中的哈希值也会不同。
 
-###### 代码实现
-在Go中，我们可以使用`golang.org/x/crypto/bcrypt`库来处理密码的哈希和验证并且它内置了盐值的生成和管理。
+密码不应明文保存，也不应使用可逆加密后保存。认证系统通常保存**专用密码哈希**，登录时再用同一算法验证输入。
+
+## 算法选择
+
+新系统优先使用 **Argon2id**。如果环境不支持，可以考虑 scrypt；bcrypt 更适合已有系统的兼容与迁移。普通 SHA-256、MD5 等快速哈希不适合密码存储，因为攻击者可以低成本进行大量猜测。
+
+每条密码记录需要独立随机盐。成熟的密码哈希库会自动生成盐，并把算法参数、盐和结果编码在同一个字符串中，不要自己拼接“盐值 + 密码”。
+
+## 成本参数
+
+密码哈希故意设计得比较慢。成本应根据服务器性能压测，在正常登录延迟和抗暴力破解能力之间取平衡，并支持以后逐步升级。验证旧哈希成功后，可以用新参数重新计算并保存。
+
+OWASP 当前给出的 Argon2id 最低配置之一是 19 MiB 内存、2 次迭代、并行度 1。bcrypt 的工作因子至少为 10，并且多数实现只处理前 72 字节输入。
+
+## Go 中的 bcrypt 示例
+
+下面保留 bcrypt 作为兼容示例。Go 的 `bcrypt.DefaultCost` 当前为 10，盐由库自动生成并写入结果。
+
 ```go
 package main
-import ( "fmt"
-		"log"
-		"golang.org/x/crypto/bcrypt"
+
+import (
+    "errors"
+
+    "golang.org/x/crypto/bcrypt"
 )
-// HashPassword 将密码进行哈希处理
-func HashPassword(password string) (string, error){
-     // 使用bcrypt生成密码的哈希值
-    hashedPassword,err:=bcrypt.GenerateFromPassword([]byte(password),
-        bcrypt.DefaultCost)
-     if err != nil {
-         return "", err
-     }
-     return string(hashedPassword), nil
- }
-// CheckPasswordHash 验证输入的密码是否正确
-func CheckPasswordHash(password, hashedPassword string) bool {
-   // 使用bcrypt比较密码和哈希值
-     err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
-     return err == nil
-}
-func main() {
-   // 假设这是用户输入的密码
-    password := "cxcxcxpassword"
-   // 哈希密码
-   hashedPassword, err := HashPassword(password)
-   if err != nil {
-         log.Fatalf("错误: %v", err)
+
+func HashPassword(password string) (string, error) {
+    if len([]byte(password)) > 72 {
+        return "", errors.New("password exceeds bcrypt's 72-byte limit")
     }
-    fmt.Printf("原始密码: %s\n", password)
-    fmt.Printf("哈希后的密码: %s\n", hashedPassword)
-    // 验证密码
-    isValid := CheckPasswordHash(password, hashedPassword)
-    fmt.Printf("密码验证结果: %v\n", isValid)
+
+    hash, err := bcrypt.GenerateFromPassword(
+        []byte(password),
+        bcrypt.DefaultCost,
+    )
+    if err != nil {
+        return "", err
+    }
+    return string(hash), nil
+}
+
+func CheckPassword(password, encodedHash string) bool {
+    err := bcrypt.CompareHashAndPassword(
+        []byte(encodedHash),
+        []byte(password),
+    )
+    return err == nil
 }
 ```
-过程：
-1. 引入包：我们使用`golang.org/x/crypto/bcrypt`包来处理密码的哈希和验证。
-2. HashPassword函数：该函数使用bcrypt库生成密码的哈希值。bcrypt在内部自动生成一个盐值，并将其添加到密码中进行哈希处理。生成的哈希值包含了盐值，因此在验证密码时不需要单独存储盐值。
-3. CheckPasswordHash函数：该函数使用bcrypt库比较输入的密码和存储的哈希值。bcrypt库会从哈希值中提取盐值，并使用它来验证密码。
 
-##### 结尾
-这就是用户密码的非明文存储，密码哈希算法可以有效地保护用户密码的安全，有效防止密码泄露，保护用户数据安全。
+不要在日志中打印原始密码、哈希或登录请求体。认证接口还需要登录限速、多因素认证、泄露密码检查和安全的重置流程；密码哈希只解决数据库泄露后的离线破解风险。
+
+## 迁移旧哈希
+
+数据库中应记录或识别哈希算法与参数。用户成功登录后，如果发现旧记录的算法或成本低于当前标准，就在本次请求中重新哈希。不要要求所有用户同时重置密码，也不要尝试“解密”旧哈希。
+
+## 参考
+
+- [OWASP Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html)
+- [Go bcrypt 文档](https://pkg.go.dev/golang.org/x/crypto/bcrypt)

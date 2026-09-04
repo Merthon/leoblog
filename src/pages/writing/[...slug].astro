@@ -56,7 +56,7 @@ const toc = headings.filter((heading) => heading.depth === 2 || heading.depth ==
         {post.data.updatedAt && (
           <div class="mobile-revision">
             <strong>修订 {formatDate(post.data.updatedAt)}</strong>
-            <p>补充内容与表达说明。</p>
+            <p>复核技术说明、示例与表达。</p>
           </div>
         )}
         <div class="mobile-related"><RelatedContent items={related} title="相关笔记" /></div>
@@ -70,7 +70,7 @@ const toc = headings.filter((heading) => heading.depth === 2 || heading.depth ==
         <aside class="desktop-toc" aria-label="文章目录">
           <h2>目录</h2>
           <ol>{toc.map((item, itemIndex) => <li class:list={{ nested: item.depth === 3, current: itemIndex === 0 }}><a href={`#${item.slug}`}>{item.text}</a></li>)}</ol>
-          {post.data.updatedAt && <div class="revision"><strong>修订 {formatDate(post.data.updatedAt)}</strong><p>补充内容与表达说明。</p></div>}
+          {post.data.updatedAt && <div class="revision"><strong>修订 {formatDate(post.data.updatedAt)}</strong><p>复核技术说明、示例与表达。</p></div>}
           {related.length > 0 && (
             <section class="desktop-related" aria-labelledby="desktop-related-title">
               <h2 id="desktop-related-title">相关笔记</h2>

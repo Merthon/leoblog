@@ -2,11 +2,14 @@
 title: "Django 学习笔记（三）：视图、模板与表单"
 description: "继续完成 Django 投票应用，梳理视图、URL 路由、模板与表单处理。"
 publishedAt: 2025-02-21
+updatedAt: 2026-09-04
 type: technical
 tags: ["Python", "Django"]
 draft: false
 readingMinutes: 10
 ---
+> **版本说明（2026-09）：** 本系列已按 Django 5.2 LTS 复核基础流程。内容源自入门阶段的学习记录；新项目请同时对照版本对应的官方教程。
+
 从  2 结束的地方开始。继续开发 Web 投票应用程序，并将专注于创建公共界面 – “视图”。
 ## 概述
 视图是 Django 应用程序中的一种 “类型” 网页，通常提供特定功能并具有特定模板。例如，在博客应用程序中，您可能有以下视图：
@@ -34,7 +37,7 @@ def results(request, question_id):
 def vote(request, question_id):
     return HttpResponse("You're voting on question %s." % question_id)
 ```
-通过添加以下 path（） 调用，将这些新视图连接到 polls.urls 模块中：
+通过添加以下 `path()` 调用，将这些新视图连接到 polls.urls 模块中：
 ```python
 from django.urls import path
 
@@ -161,7 +164,7 @@ def detail(request, question_id):
 ## 删除模板中的硬编码 URL
 当我们在 polls/index.html 模板中编写问题的链接时，该链接部分被硬编码，如下所示：
 `<li><a href="/polls/{{ question.id }}/">{{ question.question_text }}</a></li>`
-这种硬编码、紧密耦合的方法的问题在于，在具有大量模板的项目中更改 URL 变得具有挑战性。但是，由于您在 polls.urls 模块的 path（） 函数中定义了 name 参数，因此您可以使用 {% url %} 模板标签来消除对 url 配置中定义的特定 URL 路径的依赖：
+这种硬编码、紧密耦合的方法的问题在于，在具有大量模板的项目中更改 URL 变得具有挑战性。但是，由于您在 polls.urls 模块的 `path()` 函数中定义了 name 参数，因此您可以使用 {% url %} 模板标签来消除对 url 配置中定义的特定 URL 路径的依赖：
 `<li><a href="{% url 'detail' question.id %}">{{ question.question_text }}</a></li>`
 ## 命名空间 URL 名称
 项目只有一个应用程序，即 polls。在实际的 Django 项目中，可能有 5 个、10 个、20 个或更多应用程序。Django 如何区分它们之间的 URL 名称？例如，polls 应用程序具有详细信息视图，博客的同一项目中的应用程序也可能具有详细信息视图。如何让 Django 知道在使用 {% url %} 模板标签时为 url 创建哪个应用视图呢？

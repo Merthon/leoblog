@@ -1,189 +1,164 @@
 ---
 title: "Python 连接数据库"
-description: "pymysql 是一个纯 Python 实现的 MySQL 客户端库，支持 Python 2 和 Python 3。"
+description: "使用 PyMySQL 与 SQLAlchemy 2.x 连接 MySQL，处理参数化查询、事务、连接池和密钥配置。"
 publishedAt: 2025-03-11
+updatedAt: 2026-09-04
 type: technical
-tags: ["Python", "数据库"]
+tags: ["Python", "数据库", "MySQL"]
 draft: false
-readingMinutes: 6
+readingMinutes: 5
 ---
-## pymysql
-- **简介**
-   pymysql 是一个纯 Python 实现的 MySQL 客户端库，支持 Python 2 和 Python 3。它是 MySQLdb 的替代品，提供了简单直接的方式来操作 MySQL 数据库。
-- **安装**
-   pip install pymysql
-- **用法**
-   1. 建立连接。
-   2. 创建游标（支持普通游标或字典游标）。
-   3. 执行 SQL（查询、插入、更新等）。
-   4. 提交事务（对于写操作）。
-   5. 关闭连接。
-具体代码：
+
+Python 连接 MySQL 时，可以直接使用 DB-API 驱动，也可以在 SQLAlchemy 上使用连接池、SQL 表达式或 ORM。无论选哪一层，都要处理参数化查询、事务和连接生命周期。
+
+## 准备连接信息
+
+凭据从环境变量或密钥服务读取，不要拼进源码：
+
+```bash
+export DB_HOST=127.0.0.1
+export DB_PORT=3306
+export DB_NAME=app
+export DB_USERNAME=app
+export DB_PASSWORD='replace-with-a-secret'
+```
+
+应用账号只授予需要的库和操作权限，不要长期使用 root。
+
+## PyMySQL
+
+```bash
+python -m pip install -U pymysql
+```
+
 ```python
+import os
 import pymysql
 
-# 建立连接
-db = pymysql.connect(
-    host="localhost",
-    user="root",
-    password="your_password",
-    database="test_db",
-    charset="utf8mb4"  # 支持中文等字符集
+connection = pymysql.connect(
+    host=os.environ["DB_HOST"],
+    port=int(os.getenv("DB_PORT", "3306")),
+    user=os.environ["DB_USERNAME"],
+    password=os.environ["DB_PASSWORD"],
+    database=os.environ["DB_NAME"],
+    charset="utf8mb4",
+    autocommit=False,
+    connect_timeout=5,
+    read_timeout=15,
+    write_timeout=15,
 )
-try:
-    # 创建游标（可选：cursorclass=pymysql.cursors.DictCursor 返回字典格式）
-    cursor = db.cursor()
-    # 创建表
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            name VARCHAR(50),
-            age INT
-        )
-    """)
-    # 插入数据
-    cursor.execute("INSERT INTO users (name, age) VALUES (%s, %s)", ("Alice", 25))
-    db.commit()  # 提交事务
-    # 查询数据
-    cursor.execute("SELECT * FROM users WHERE age > %s", (20,))
-    results = cursor.fetchall()
-    for row in results:
-        print(row)  # 输出元组：(1, 'Alice', 25)
-
-except Exception as e:
-    print(f"Error: {e}")
-    db.rollback()  # 出错时回滚
-
-finally:
-    # 关闭游标和连接
-    cursor.close()
-    db.close()
-```
-
-## mysql-connector-python
-- **简介**
-   mysql-connector-python 是 MySQL 官方提供的 Python 连接库，由 Oracle 开发，纯 Python 实现，支持 Python 3。
-- **安装**
-  pip install mysql-connector-python
-代码演示：
-```python
-import mysql.connector
-from mysql.connector import Error
 
 try:
-    # 建立连接
-    db = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="your_password",
-        database="test_db",
-        charset="utf8mb4"
-    )
-    # 创建游标（可选：buffered=True 预加载结果）
-    cursor = db.cursor()
-    # 创建表
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS employees (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            name VARCHAR(50),
-            salary INT
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "INSERT INTO users (name, age) VALUES (%s, %s)",
+            ("Alice", 25),
         )
-    """)
-    # 插入数据（使用参数化查询）
-    cursor.execute("INSERT INTO employees (name, salary) VALUES (%s, %s)", ("Bob", 50000))
-    db.commit()
-    # 查询数据
-    cursor.execute("SELECT * FROM employees WHERE salary > %s", (40000,))
-    results = cursor.fetchall()
-    for row in results:
-        print(row)  # 输出元组：(1, 'Bob', 50000)
-except Error as e:
-    print(f"Error: {e}")
-    db.rollback()
+        cursor.execute(
+            "SELECT id, name, age FROM users WHERE age > %s",
+            (20,),
+        )
+        for row in cursor.fetchall():
+            print(row)
+    connection.commit()
+except Exception:
+    connection.rollback()
+    raise
 finally:
-    cursor.close()
-    db.close()
-```
-- 连接池
-代码展示：
-```python
-from mysql.connector import pooling
-
-# 配置连接池
-config = {
-    "pool_name": "mypool",
-    "pool_size": 5,
-    "host": "localhost",
-    "user": "root",
-    "password": "your_password",
-    "database": "test_db"
-}
-pool = pooling.MySQLConnectionPool(**config)
-# 从池中获取连接
-db = pool.get_connection()
-cursor = db.cursor()
-cursor.execute("SELECT * FROM employees")
-print(cursor.fetchall())
-cursor.close()
-db.close()
+    connection.close()
 ```
 
-## SQLAlchemy
-- **简介**
-  SQLAlchemy 是一个功能强大的 ORM（对象关系映射）库，支持 MySQL 等多种数据库，提供从低级 SQL 操作到高级 ORM 的多种方式。
-- **安装**
-  pip install sqlalchemy pymysql（需要 pymysql 作为 MySQL 驱动）。
-- **用法**
-  1. 创建引擎。
-  2. 定义模型（表结构）。
-  3. 创建会话。
-  4. 执行增删改查。
-代码展示：
-```python
-from sqlalchemy import create_engine, Column, Integer, String
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+PyMySQL 的占位符是 `%s`，但参数仍应作为第二个参数传入。不要用字符串格式化、f-string 或 `%` 操作符拼 SQL。
 
-# 创建引擎
+## SQLAlchemy 2.x
+
+```bash
+python -m pip install -U sqlalchemy pymysql
+```
+
+`URL.create` 能正确处理密码中的 `@`、`:` 等特殊字符：
+
+```python
+import os
+from sqlalchemy import URL, create_engine, text
+
+url = URL.create(
+    "mysql+pymysql",
+    username=os.environ["DB_USERNAME"],
+    password=os.environ["DB_PASSWORD"],
+    host=os.environ["DB_HOST"],
+    port=int(os.getenv("DB_PORT", "3306")),
+    database=os.environ["DB_NAME"],
+)
+
 engine = create_engine(
-    "mysql+pymysql://root:your_password@localhost/test_db",
-    echo=True  # 打印 SQL 日志，可选
+    url,
+    pool_size=5,
+    max_overflow=5,
+    pool_pre_ping=True,
+    pool_recycle=1800,
 )
 
-# 定义基类
-Base = declarative_base()
+with engine.begin() as connection:
+    connection.execute(
+        text("INSERT INTO users (name, age) VALUES (:name, :age)"),
+        {"name": "Bob", "age": 28},
+    )
 
-# 定义模型
-class Student(Base):
-    __tablename__ = "students"
-    id = Column(Integer, primary_key=True)
-    name = Column(String(50))
-    grade = Column(Integer)
-
-# 创建表
-Base.metadata.create_all(engine)
-# 创建会话
-Session = sessionmaker(bind=engine)
-session = Session()
-try:
-    # 插入数据
-    new_student = Student(name="Charlie", grade=85)
-    session.add(new_student)
-    session.commit()
-    # 查询数据
-    students = session.query(Student).filter(Student.grade > 80).all()
-    for student in students:
-        print(student.id, student.name, student.grade)
-    # 更新数据
-    student = session.query(Student).filter_by(name="Charlie").first()
-    student.grade = 90
-    session.commit()
-    # 删除数据
-    session.delete(student)
-    session.commit()
-except Exception as e:
-    print(f"Error: {e}")
-    session.rollback()
-finally:
-    session.close()
+with engine.connect() as connection:
+    rows = connection.execute(
+        text("SELECT id, name, age FROM users WHERE age > :age"),
+        {"age": 20},
+    )
+    for row in rows:
+        print(row.id, row.name, row.age)
 ```
+
+`engine.begin()` 成功退出时提交，发生异常时回滚。`engine.connect()` 不会自动提交写操作。
+
+## SQLAlchemy ORM
+
+```python
+from sqlalchemy import String, select
+from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
+
+
+class Base(DeclarativeBase):
+    pass
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(80))
+    age: Mapped[int]
+
+
+with Session(engine) as session:
+    session.add(User(name="Charlie", age=30))
+    session.commit()
+
+with Session(engine) as session:
+    users = session.scalars(
+        select(User).where(User.age > 20).order_by(User.id)
+    ).all()
+    for user in users:
+        print(user.id, user.name, user.age)
+```
+
+这是 SQLAlchemy 2.x 的声明式映射与查询写法。旧教程中的 `sqlalchemy.ext.declarative.declarative_base()` 和 `session.query()` 仍可能出现在遗留项目中，但新代码优先使用 `DeclarativeBase`、`select()` 和 `Session` 上下文管理器。
+
+## 连接池与事务
+
+- 连接池大小要结合数据库最大连接数、应用实例数和查询耗时计算。
+- `pool_pre_ping` 能在借出连接前检测部分失效连接，但不能替代失败重试设计。
+- 事务尽量短，不要在事务中等待外部 HTTP 请求。
+- 只重试明确的临时错误，并确认操作具备幂等性。
+- 生产环境启用 TLS，并正确验证数据库证书。
+
+## 参考
+
+- [PyMySQL 文档](https://pymysql.readthedocs.io/en/latest/)
+- [SQLAlchemy 2.0 Tutorial](https://docs.sqlalchemy.org/en/20/tutorial/)
+- [SQLAlchemy ORM Quick Start](https://docs.sqlalchemy.org/en/20/orm/quickstart.html)

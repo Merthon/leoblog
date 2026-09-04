@@ -1,7 +1,8 @@
 ---
 title: "XPath 使用笔记"
-description: "XPath（XML Path Language）是一种用于在XML文档中查找和筛选信息的语言，它常用于爬虫开发中，帮助我们定位网页中的元素。"
+description: "整理 XPath 的路径表达式、谓词、属性选择、文本提取与组合条件。"
 publishedAt: 2025-01-12
+updatedAt: 2026-09-04
 type: technical
 tags: ["XPath"]
 draft: false

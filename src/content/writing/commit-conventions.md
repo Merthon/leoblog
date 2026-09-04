@@ -1,72 +1,92 @@
 ---
 title: "Commit 规范"
-description: "在开发中，使用一致的 Git commit 规范 可以帮助团队成员理解每个提交的目的和内容。"
+description: "用 Conventional Commits 组织提交标题、正文和破坏性变更说明。"
 publishedAt: 2025-02-09
+updatedAt: 2026-09-04
 type: technical
-tags: ["Git"]
+tags: ["Git", "工程实践"]
 draft: false
-readingMinutes: 2
+readingMinutes: 3
 ---
-在开发中，使用一致的 **Git commit 规范** 可以帮助团队成员理解每个提交的目的和内容。常见的 **commit 规范** 包括：
 
-### 1. **常见的 Commit Message 格式**
+提交信息的目标是让后来的人快速回答两个问题：改了什么，为什么要改。本文采用 Conventional Commits 的基本格式，但团队约定永远优先于个人习惯。
 
-一般采用 **简短** 但具有描述性的方式来撰写 commit 信息，通常使用以下格式：
+## 基本格式
 
-php-template
+```text
+<type>[optional scope][!]: <description>
 
-复制编辑
+[optional body]
 
-`<类型>(<范围>): <描述>`
+[optional footer]
+```
 
-- `<类型>`：表示 commit 的类型，通常是以下之一：
+常用类型：
 
-    - `feat`: 新功能
-    - `fix`: 修复问题
-    - `docs`: 文档修改
-    - `style`: 代码格式调整（不影响功能）
-    - `refactor`: 代码重构
-    - `perf`: 性能优化
-    - `test`: 测试相关的修改
-    - `chore`: 其他杂项修改（如构建工具、CI 配置等）
-- `<范围>`（可选）：表示此次提交的影响范围，比如具体模块、功能名等。
+- `feat`：新增对用户可见的能力。
+- `fix`：修复缺陷。
+- `docs`：只改文档。
+- `refactor`：不改变外部行为的结构调整。
+- `perf`：性能优化。
+- `test`：补充或修正测试。
+- `build`：构建系统或外部依赖。
+- `ci`：持续集成配置。
+- `chore`：无法归入以上类型的维护工作。
 
-- `<描述>`：简洁描述提交的内容，通常首字母小写，不超过 50 个字符，且避免使用句号。
+`style` 只表示不影响语义的格式修改，不是 UI 样式功能。
 
+## 示例
 
-### 2. **实例**
+```text
+feat(search): add keyboard navigation
+fix(auth): reject expired refresh tokens
+docs(readme): document local setup
+refactor(storage): isolate cache adapter
+```
 
-- `feat(user): add user authentication`
-- `fix(auth): resolve login issue`
-- `docs(readme): update installation instructions`
-- `style(ui): format buttons on homepage`
-- `refactor(core): optimize data processing logic`
-- `perf(query): improve search performance`
-- `test(api): add unit tests for user routes`
-- `chore(deps): update dependency versions`
+标题使用祈使语气，直接描述变化。是否限制在 50 或 72 个字符取决于团队工具，不必为了机械凑长度牺牲准确性。
 
-### 3. **消息模板**
+## 解释为什么
 
-一个常见的 commit 信息模板可以是：
+复杂修改在正文中说明背景、取舍和行为变化：
 
-php-template
+```text
+fix(queue): prevent duplicate delivery after timeout
 
-复制编辑
+Keep the delivery record until the retry window expires. Removing it as
+soon as the worker times out allowed a second worker to claim the same job.
 
-`<类型>(<模块>): <简要描述>  详细描述（可选，解释为什么要进行这次修改）。`
+Refs: #184
+```
 
-例如：
+正文不需要复述 diff。代码已经说明“怎么改”，提交信息更适合记录当时的约束与原因。
 
-pgsql
+## 破坏性变更
 
-复制编辑
+在类型后加 `!`，并在 footer 中解释迁移方法：
 
-`feat(auth): add JWT authentication  Implemented JWT-based authentication to improve security and scalability of the user authentication process.`
+```text
+feat(api)!: remove legacy token endpoint
 
-### 4. **其他注意事项**
+BREAKING CHANGE: clients must use /oauth/token. Existing refresh tokens
+remain valid until their original expiry time.
+```
 
-- **单一职责**：每次提交应尽量只包含一个功能的修改。
-- **避免“大块提交”**：提交前确保你所提交的内容有清晰的目标，避免过大的提交。
-- **分支管理**：通常会使用 **feature branches**（功能分支），每个功能或任务都对应一个独立的分支，以保证每个 commit 都是有意义的。
+`BREAKING CHANGE` 不能只说“有破坏性变化”，要说明受影响对象、替代方案和迁移窗口。
 
-如果你的团队或项目有特定的 **commit 规范**，可以根据这些规则来调整自己的提交格式。
+## 提交粒度
+
+一个好提交通常满足：
+
+- 只处理一个明确问题。
+- 能独立构建和测试。
+- 不夹带无关格式化。
+- 不包含密钥、生成物和调试日志。
+- 回滚时不会顺带撤销无关功能。
+
+如果标题里需要用“以及”连接两个互不相关的变化，通常应该拆成两个提交。
+
+## 参考
+
+- [Conventional Commits 1.0.0](https://www.conventionalcommits.org/zh-hans/v1.0.0/)
+- [Git：提交变更](https://git-scm.com/book/zh/v2/Git-基础-记录每次更新到仓库)

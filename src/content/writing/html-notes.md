@@ -1,7 +1,8 @@
 ---
 title: "HTML 学习笔记"
-description: "HTML(HyperText Markup Language，超文本标记语言）是一种用来告知浏览器如何组织页面的标记语言。"
+description: "整理 HTML 文档结构、语义元素、表单、媒体与可访问性基础。"
 publishedAt: 2023-05-25
+updatedAt: 2026-09-04
 type: technical
 tags: ["HTML"]
 draft: false

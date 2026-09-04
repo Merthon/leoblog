@@ -1,79 +1,75 @@
 ---
 title: "爬虫中代理的使用"
-description: "在爬虫中使用代理是为了应对一些网站的反爬虫机制，它能够帮助你隐藏爬虫的真实 IP 地址，避免被封禁。"
+description: "说明采集程序使用正向代理的配置方式、信任边界、故障处理与合规要求。"
 publishedAt: 2025-01-12
+updatedAt: 2026-09-04
 type: technical
 tags: ["Python", "爬虫", "代理"]
 draft: false
-readingMinutes: 4
+readingMinutes: 3
 ---
-在爬虫中使用代理是为了应对一些网站的反爬虫机制，它能够帮助你隐藏爬虫的真实 IP 地址，避免被封禁。
-## 代理的基本概念
-代理服务器是一个中间服务器，它接受客户端的请求并代表客户端访问目标网站。通过代理，客户端的 IP 地址对目标服务器来说是代理服务器的 IP 地址，而不是爬虫的真实 IP。
-常见的代理类型：
-- **HTTP 代理**：适用于普通的 HTTP 请求。
-- **HTTPS 代理**：适用于 HTTPS 请求，提供加密传输。
-- **SOCKS 代理**：支持更多的协议类型，比 HTTP/HTTPS 代理更通用。
-- **透明代理**：代理服务器不会修改请求或响应，目标服务器能看到真实的请求信息。
-- **匿名代理**：代理服务器隐藏了客户端的 IP 地址，但目标服务器知道请求来自代理服务器。
-- **高匿代理**：代理服务器不仅隐藏了客户端的 IP 地址，还不会暴露自己是代理服务器。
-## 代理池
-为了提高爬虫的稳定性，通常会使用代理池，即预先准备一个代理 IP 列表，爬虫在运行时会从池中随机选取代理进行请求。这样，即便某个代理 IP 被封禁，爬虫仍然能够继续工作。
-常见的代理池策略：
-- **随机选择**：每次请求时从代理池中随机选择一个代理。
-- **按频率限制使用**：一些代理池会根据 IP 的使用频率进行调度，避免频繁使用同一个代理 IP。
-- **代理检查**：定期检查代理是否可用，剔除掉失效的代理。
-## 设置代理
-1. 在 Python 爬虫中使用代理通常依赖于请求库（如 `requests`）或 Scrapy 框架。
+
+采集程序可能因为企业出口、网络隔离、地域测试或统一审计而需要正向代理。代理不是“隐身工具”：目标服务仍能通过账号、请求模式和其他信号识别客户端，代理本身也能观察你的流量。
+
+> 不要使用代理绕过封禁、验证码、付费墙、地域限制或访问控制。只有在数据、账号和自动化行为都获得授权时再发送请求。
+
+## Requests 配置
+
 ```python
+import os
 import requests
 
-proxies = {
-    'http': 'http://username:password@proxy_ip:proxy_port',
-    'https': 'https://username:password@proxy_ip:proxy_port'
-}
+proxy_url = os.environ["HTTPS_PROXY"]
 
-response = requests.get('http://example.com', proxies=proxies)
-print(response.text)
+with requests.Session() as session:
+    response = session.get(
+        "https://example.com",
+        proxies={"http": proxy_url, "https": proxy_url},
+        timeout=(3.05, 15),
+    )
+    response.raise_for_status()
+    print(response.status_code)
 ```
-2. 使用 Scrapy 设置代理：
-在 Scrapy 中，你可以通过中间件来设置代理。Scrapy 提供了 `HttpProxyMiddleware` 来处理代理设置。
-**启用代理中间件**：
-在 `settings.py` 中启用中间件：
-```python
-DOWNLOADER_MIDDLEWARES = {
-    'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': 1,
-}
-```
-**设置代理**：
-可以通过设置 `http_proxy` 来指定全局代理，或者在 `spider` 里为特定请求设置代理。
-- **全局代理**：
-  在 `settings.py` 中设置：
-  ```python
-  HTTP_PROXY = 'http://proxy_ip:proxy_port'
-```
-- **为特定请求设置代理**：
-在 Spider 中使用 `meta` 字段动态设置代理：
-```python
-def start_requests(self):
-    url = 'http://example.com'
-    proxy = 'http://proxy_ip:proxy_port'
-    yield scrapy.Request(url, meta={'proxy': proxy})
-```
-## 使用代理的注意事项
-- **代理的质量**：公开的免费代理通常不稳定，容易失效或被封禁。付费代理通常更稳定，速度更快，匿名性更好。
-- **代理的数量**：使用多个代理可以减少单个代理被封禁的风险。
-- **反爬虫策略**：有些网站不仅仅依靠 IP 进行防护，还会检测请求的频率、请求头等。适当的调整请求间隔和使用合适的 User-Agent 可以提高爬虫的成功率。
-- **代理验证**：需要定期验证代理是否有效，如果代理池中的代理都不可用，爬虫可能无法正常工作。
-## 常见的代理服务
-- **免费的代理**：例如 [Free Proxy List](https://www.free-proxy-list.net/)，这些代理的更新和质量通常较差，但适合简单的爬虫项目。
-- **付费的代理服务**：例如 [ProxyMesh](https://proxymesh.com/)、[ScraperAPI](https://www.scraperapi.com/)、[Bright Data](https://brightdata.com/)，这些服务提供高质量的代理和更多的功能，适合较为复杂的爬虫项目。
-## 自动化管理代理池
-你可以使用第三方库或自己实现代理池管理系统。例如，使用 `proxy_pool` 库来自动从多个代理源获取新的代理，并定期清理失效代理。
-```python
-from proxy_pool import ProxyPool
 
-proxy_pool = ProxyPool()
-proxy = proxy_pool.get_proxy()
+代理账号和密码应从环境变量或密钥服务读取。不要把它们硬编码进仓库。
+
+## HTTPX 配置
+
+当前 HTTPX 使用单数参数 `proxy`：
+
+```python
+import os
+import httpx
+
+with httpx.Client(proxy=os.environ["HTTPS_PROXY"], timeout=10.0) as client:
+    response = client.get("https://example.com")
+    response.raise_for_status()
 ```
-爬虫中使用代理是保护自己免受封禁的一个重要手段，而如何选择、管理代理以及配合其他反爬措施（如调整请求头、控制请求速率等）是提高爬虫稳定性的关键。
+
+多代理路由使用 `mounts`，不要沿用旧版本的 `proxies={...}` 写法。
+
+## 信任边界
+
+- HTTPS 代理通常能看到目标主机、连接时间和流量大小；安装代理提供的根证书后，它还可能解密内容。
+- 来源不明的免费代理可能记录或修改流量，不应传输 Cookie、Token 和个人数据。
+- TLS 证书错误应查明原因，不能简单设置 `verify=False`。
+- 代理出口地址仍可能被限流；遵守服务端返回的 `Retry-After` 和速率要求。
+
+## 可用性与重试
+
+代理失败常见于连接超时、TLS 握手、407 认证失败和上游 5xx。重试应满足：
+
+- 只重试临时错误。
+- 设置最大次数和总时限。
+- 使用指数退避与随机抖动。
+- 不因换代理而重复提交非幂等请求。
+- 记录代理节点、错误类型和请求 ID，但不记录凭据。
+
+## 代理池
+
+自建代理池要维护健康检查、容量、地域和凭据轮换。公开抓取任务更应该先降低并发、缓存结果并使用官方 API，而不是靠不断更换出口逃避限制。
+
+## 参考
+
+- [Requests 代理配置](https://requests.readthedocs.io/en/latest/user/advanced/#proxies)
+- [HTTPX 代理配置](https://www.python-httpx.org/advanced/proxies/)

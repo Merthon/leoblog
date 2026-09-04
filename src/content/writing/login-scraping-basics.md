@@ -1,30 +1,45 @@
 ---
 title: "模拟登录基础"
-description: "通过模拟用户在浏览器中执行的登录操作，获取并维持用户的登录状态，从而访问需要身份认证的网页或数据。"
+description: "理解浏览器会话自动化中的 Cookie、Token、CSRF 与登录状态验证。"
 publishedAt: 2025-01-09
+updatedAt: 2026-09-04
 type: technical
-tags: ["Python", "爬虫", "模拟登录"]
+tags: ["Python", "认证", "自动化"]
 draft: false
 readingMinutes: 2
 ---
-## 基本原理
-通过模拟用户在浏览器中执行的登录操作，获取并维持用户的登录状态，从而访问需要身份认证的网页或数据。
-### 发送登录请求
-用户在浏览器中提交登录表单时，会向服务器发送一个 HTTP 请求，这个请求通常是一个 **POST** 请求，包含了用户输入的 **用户名** 和 **密码**，以及其他一些必要的字段（例如：CSRF token、验证码等）。
-### 认证与验证
-服务器收到登录请求后，会进行认证与验证，主要包括：
-- **检查用户名和密码是否正确**：服务器会对比数据库中的用户数据，验证用户名和密码是否匹配。
-- **CSRF token 检查**：如果存在 CSRF 防护，服务器会验证请求中包含的 CSRF token 是否有效。这个 token 是防止跨站请求伪造攻击的标记。
-### 设置 Cookie 或 Token
-如果登录信息正确，服务器会在响应中设置一个 **Session cookie** 或者返回一个 **JWT（JSON Web Token）**。这些都是用来表示用户身份的认证信息。
-- **Session cookie**：通常在服务器端生成一个 session ID，并通过 cookie 返回给客户端。该 session ID 用于标识用户的会话，服务器会将会话信息（如用户身份）保存在内存或数据库中。
-- **JWT**：在某些情况下，服务器会返回一个 JWT，客户端需要在后续请求中带上这个 token，来证明自己已经登录。
-### 维护登录状态
-登录成功后，为了模拟用户持续登录的状态，爬虫需要维护登录过程中获取到的 **Session** 或 **Cookie**。通过在后续的 HTTP 请求中附带这些认证信息，爬虫可以继续访问需要登录权限的页面。
-- **保持会话（Session）**：通过 HTTP 请求中的 **Cookie**，爬虫可以维持与服务器的会话，这样就可以重复使用相同的登录状态进行多次请求。
-- **使用 Token**：如果使用的是 JWT 等 token 认证方式，爬虫则需要在后续请求的 **Authorization header** 中附带 token。
-### 访问受保护的资源
-登录成功后，用户通常会被重定向到一个主页或其他受保护的页面。此时，爬虫只需要带上保存的 **Cookie** 或 **Token**，就可以访问这些页面。
 
-- **带 Cookie 访问**：使用会话对象（如 `requests.Session()`）模拟浏览器行为，自动在后续请求中带上正确的 cookies。
-- **带 Token 访问**：在请求头中加入 `Authorization: Bearer <token>` 来模拟带 Token 的请求。
+“模拟登录”更准确的说法是**自动化一个经过授权的客户端会话**。它不是一种通用技巧：不同系统可能使用服务端 Session、OAuth/OIDC、JWT、一次性验证码或硬件密钥，客户端必须遵循服务端公开的认证流程。
+
+## 常见流程
+
+1. 通过 HTTPS 获取登录页或调用登录 API。
+2. 按协议提交凭据，并同时提交需要的 CSRF Token、设备信息或挑战结果。
+3. 服务端验证身份，返回 Session Cookie 或短期令牌。
+4. 客户端保存会话状态，并在后续请求中携带凭据。
+5. 通过受保护接口验证登录结果，而不是只判断登录请求是否返回 200。
+6. 到期后按协议刷新或重新认证，退出时主动撤销会话。
+
+## Cookie 与 Token
+
+- **Session Cookie**：Cookie 通常只保存一个随机会话标识，用户状态保存在服务端。
+- **Bearer Token**：持有者即可使用，泄露后不需要密码也能请求接口，因此不能写进 URL 或日志。
+- **JWT**：只是一种令牌格式。签名能防止内容被篡改，但 Payload 默认不加密。
+
+## 安全检查
+
+- 凭据从环境变量或密钥管理服务读取，不写死在源码里。
+- 所有请求设置连接和读取超时，并检查 4xx/5xx 状态。
+- 浏览器会话优先使用 `Secure`、`HttpOnly`、`SameSite` Cookie。
+- 不在 `localStorage` 中长期保存会话标识或刷新令牌。
+- 为登录接口设置限速、审计与异常登录提醒。
+- 不绕过验证码、多因素认证、访问控制或站点的自动化限制。
+
+## 选择合适的方法
+
+自有系统优先提供明确、可测试的 API 或 OAuth/OIDC 流程，而不是让脚本解析登录页面。页面自动化更适合端到端测试；数据集成则应该使用服务端 API、专用账号和最小权限。
+
+## 参考
+
+- [OWASP Session Management Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)
+- [OWASP HTML5 Security Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/HTML5_Security_Cheat_Sheet.html)

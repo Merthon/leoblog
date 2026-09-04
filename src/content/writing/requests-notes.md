@@ -1,136 +1,142 @@
 ---
 title: "Requests 使用笔记"
-description: "requests 是 Python 中最流行的 HTTP 请求库之一，简化了 HTTP 请求的发送和响应处理。"
+description: "整理 Requests 的会话复用、超时、状态检查、JSON、文件上传和代理配置。"
 publishedAt: 2025-01-06
-updatedAt: 2025-01-14
+updatedAt: 2026-09-04
 type: technical
-tags: ["Python", "爬虫"]
+tags: ["Python", "HTTP"]
 draft: false
-readingMinutes: 5
+readingMinutes: 4
 ---
-`requests` 是 Python 中最流行的 HTTP 请求库之一，简化了 HTTP 请求的发送和响应处理。
-### 1. 发送 GET 请求
 
-`requests.get()` 用于发送 GET 请求。它从指定的 URL 获取数据。
+Requests 提供简洁的同步 HTTP API。它默认**没有请求超时**，因此正式代码必须显式设置超时，并检查错误状态。
+
+## 基本请求
+
 ```python
 import requests
 
-response = requests.get('https://httpbin.org/get')
+response = requests.get(
+    "https://httpbin.org/get",
+    params={"page": 2},
+    timeout=(3.05, 15),
+)
+response.raise_for_status()
 
-# 获取响应内容
-print(response.text)
-
-# 获取 JSON 数据（如果有）
-print(response.json())
-
-# 查看响应状态码
 print(response.status_code)
-
-# 查看响应头
-print(response.headers)
-```
-### 2. 发送 POST 请求
-`requests.post()` 用于发送 POST 请求，通常用于向服务器提交数据。
-```python
-import requests
-
-data = {'key': 'value'}
-response = requests.post('https://httpbin.org/post', data=data)
-
-print(response.text)
-```
-可以通过 `json` 参数发送 JSON 数据：
-```python
-import requests
-
-json_data = {'name': 'John', 'age': 30}
-response = requests.post('https://httpbin.org/post', json=json_data)
-
-print(response.text)
-```
-### 3. 添加请求头
-有时需要传递特定的请求头（比如 User-Agent 或 Authorization 等）。可以通过 `headers` 参数传递自定义的头信息。
-```python
-import requests
-
-headers = {'User-Agent': 'my-app'}
-response = requests.get('https://httpbin.org/headers', headers=headers)
-
+print(response.headers.get("content-type"))
 print(response.json())
 ```
-### 4. 发送带参数的请求
-你可以通过 `params` 参数传递 URL 查询参数。
+
+`timeout=(3.05, 15)` 分别设置连接超时和读取超时。它不是整个下载任务的绝对截止时间。
+
+## 复用 Session
+
+同一服务有多次请求时复用 `Session`，可以保留 Cookie 和连接池：
+
 ```python
 import requests
 
-params = {'search': 'python', 'page': 2}
-response = requests.get('https://httpbin.org/get', params=params)
+with requests.Session() as session:
+    session.headers.update({"User-Agent": "leo-notes/1.0"})
 
-print(response.text)
+    first = session.get("https://httpbin.org/cookies/set/theme/dark", timeout=10)
+    first.raise_for_status()
+
+    second = session.get("https://httpbin.org/cookies", timeout=10)
+    second.raise_for_status()
+    print(second.json())
 ```
-### 5. 处理响应
-- `response.text`：获取响应的内容，通常是字符串。
-- `response.json()`：如果响应是 JSON 格式，可以直接调用该方法将其解析为 Python 对象。
-- `response.status_code`：获取响应的 HTTP 状态码。
-- `response.headers`：获取响应头，返回一个字典。
-- `response.cookies`：获取响应的 cookies。
-### 6. 处理异常
-`requests` 会抛出异常，例如网络错误、超时等。可以使用 `try-except` 来捕获异常。
+
+User-Agent 应真实标识客户端。第三方服务如果提供格式要求或联系信息字段，应按其规范填写。
+
+## 表单与 JSON
+
+```python
+form_response = requests.post(
+    "https://httpbin.org/post",
+    data={"name": "Leo"},
+    timeout=10,
+)
+form_response.raise_for_status()
+
+json_response = requests.post(
+    "https://httpbin.org/post",
+    json={"name": "Leo"},
+    timeout=10,
+)
+json_response.raise_for_status()
+```
+
+`data=` 默认用于表单编码，`json=` 会序列化对象并设置 JSON 内容类型。
+
+## 异常处理
+
 ```python
 import requests
 
 try:
-    response = requests.get('https://httpbin.org/delay/10', timeout=5)
-    print(response.text)
-except requests.exceptions.Timeout:
-    print('请求超时')
-except requests.exceptions.RequestException as e:
-    print(f'请求发生错误: {e}')
+    response = requests.get("https://httpbin.org/status/503", timeout=10)
+    response.raise_for_status()
+except requests.Timeout:
+    print("请求超时")
+except requests.HTTPError as error:
+    print(f"HTTP 错误：{error.response.status_code}")
+except requests.RequestException as error:
+    print(f"网络错误：{error}")
 ```
-### 7. 会话管理
-`requests.Session()` 可以帮助你在多个请求之间保持会话（比如自动保存 cookies、持久化某些参数等）。
+
+不要无条件重试。401、403、404 等通常不是临时故障；429 和部分 5xx 可以按服务端要求，在有限次数内指数退避。
+
+## 上传文件
+
 ```python
+with open("example.txt", "rb") as file:
+    response = requests.post(
+        "https://httpbin.org/post",
+        files={"file": ("example.txt", file, "text/plain")},
+        timeout=30,
+    )
+    response.raise_for_status()
+```
+
+上下文管理器保证异常发生时文件仍会关闭。
+
+## 认证信息
+
+```python
+import os
 import requests
 
-session = requests.Session()
-
-# 使用 session 发起请求
-response = session.get('https://httpbin.org/cookies/set/sessioncookie/123456')
-print(response.text)
-
-# 在同一个 session 里发起请求
-response = session.get('https://httpbin.org/cookies')
-print(response.json())
+response = requests.get(
+    "https://api.example.com/profile",
+    headers={"Authorization": f"Bearer {os.environ['API_TOKEN']}"},
+    timeout=10,
+)
+response.raise_for_status()
 ```
-### 8. 上传文件
-可以使用 `files` 参数上传文件。
+
+Token 不应出现在 URL、源码、截图或日志中。Basic Auth 也必须运行在 HTTPS 上。
+
+## 代理
+
 ```python
-import requests
-
-files = {'file': open('example.txt', 'rb')}
-response = requests.post('https://httpbin.org/post', files=files)
-
-print(response.text)
-files['file'].close()
-```
-### 9. 认证
-`requests` 支持多种认证方式，如基本认证（Basic Auth）和 OAuth2。
-```python
-from requests.auth import HTTPBasicAuth
-
-response = requests.get('https://httpbin.org/basic-auth/user/pass', auth=HTTPBasicAuth('user', 'pass'))
-print(response.text)
-```
-### 10. 代理设置
-如果你需要通过代理发送请求，可以使用 `proxies` 参数。
-```python
-import requests
-
 proxies = {
-    'http': 'http://10.10.1.10:3128',
-    'https': 'https://10.10.1.10:1080',
+    "http": "http://127.0.0.1:8080",
+    "https": "http://127.0.0.1:8080",
 }
 
-response = requests.get('https://httpbin.org/ip', proxies=proxies)
-print(response.json())
+response = requests.get(
+    "https://httpbin.org/ip",
+    proxies=proxies,
+    timeout=10,
+)
+response.raise_for_status()
 ```
+
+只使用可信代理。代理配置不应用来绕过访问控制、封禁或服务条款。
+
+## 参考
+
+- [Requests 快速入门](https://requests.readthedocs.io/en/latest/user/quickstart/)
+- [Requests 高级用法](https://requests.readthedocs.io/en/latest/user/advanced/)

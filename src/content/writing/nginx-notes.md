@@ -1,110 +1,123 @@
 ---
 title: "Nginx 使用及注意事项"
-description: "Nginx是一款高性能的 Web 服务器和反向代理服务器，常用于静态资源服务、负载均衡、反向代理、HTTPS 部署等场景。"
+description: "整理 Nginx 静态文件、反向代理、HTTPS、配置检查与常见排障方法。"
 publishedAt: 2025-08-25
+updatedAt: 2026-09-04
 type: technical
 tags: ["服务器", "Nginx"]
 draft: false
 readingMinutes: 4
 ---
-Nginx是一款高性能的 Web 服务器和反向代理服务器，常用于静态资源服务、负载均衡、反向代理、HTTPS 部署等场景。相比 Apache，Nginx 更轻量、更高效，并且在大规模并发场景下表现优秀。
-## 一、Nginx 的常见使用场景
 
-### 1. 静态资源服务器
-将 HTML、CSS、JS、图片等静态文件直接交给 Nginx 处理，效率极高。
+Nginx 常用于静态文件服务、TLS 终止和反向代理。配置不复杂，但代理头、超时和证书处理如果含糊，问题通常会留到上线后才暴露。
+
+## 静态文件
+
 ```nginx
 server {
     listen 80;
     server_name example.com;
 
-    root /var/www/html;
-    index index.html index.htm;
+    root /var/www/example;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
 }
 ```
-### 2. 反向代理
-通过 Nginx 将请求转发给后端应用（如 Python Flask、Node.js、Java 服务）。
+
+`root` 指向只读发布目录。不要让 Web 服务用户对应用代码和静态资源拥有不必要的写权限。
+
+## 反向代理
+
 ```nginx
+upstream app_backend {
+    server 127.0.0.1:8000;
+    keepalive 16;
+}
+
 server {
     listen 80;
     server_name api.example.com;
 
     location / {
-        proxy_pass http://127.0.0.1:5000;
+        proxy_pass http://app_backend;
+        proxy_http_version 1.1;
+
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        proxy_connect_timeout 5s;
+        proxy_read_timeout 60s;
+        proxy_send_timeout 60s;
     }
 }
 ```
-### 3. 负载均衡
-多个后端实例时，可以利用 Nginx 实现轮询或加权分配。
-```nginx
-upstream backend {
-    server 127.0.0.1:8080;
-    server 127.0.0.1:8081 weight=2;
-}
 
+后端只有在请求确实来自可信反向代理时，才能信任 `X-Forwarded-*`。如果 Nginx 前面还有 CDN 或负载均衡器，需要明确可信代理地址并正确配置真实客户端 IP，不能直接相信任意客户端传来的头。
+
+## HTTPS
+
+```nginx
 server {
     listen 80;
-    location / {
-        proxy_pass http://backend;
-    }
+    server_name example.com;
+    return 301 https://$host$request_uri;
 }
-```
-### 4. HTTPS 支持
-结合 **Let's Encrypt** 或商业 SSL 证书，配置 HTTPS 访问。
-```nginx
+
 server {
     listen 443 ssl;
     server_name example.com;
 
-    ssl_certificate     /etc/nginx/ssl/example.crt;
-    ssl_certificate_key /etc/nginx/ssl/example.key;
+    ssl_certificate     /etc/nginx/tls/fullchain.pem;
+    ssl_certificate_key /etc/nginx/tls/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
 
-    location / {
-        root /var/www/html;
-        index index.html;
-    }
+    root /var/www/example;
+    index index.html;
 }
 ```
-## 二、Nginx 配置文件结构
 
-Nginx 配置文件一般位于 `/etc/nginx/nginx.conf`，主要包含以下几个部分：
-1. **全局块**（用户、进程数、日志等）
-2. **events 块**（处理连接的并发数等参数）
-3. **http 块**（代理、缓存、gzip、server 配置等）
-4. **server 块**（虚拟主机配置，如域名、端口）
-5. **location 块**（请求路径的匹配规则）
-## 三、Nginx 使用中的注意事项
-### 1. 配置管理
+私钥文件应限制读取权限。证书续期后需要平滑重载 Nginx。
+
+HSTS 会让浏览器在有效期内强制使用 HTTPS。只有确认所有子域、证书和回滚方案都正确后再启用，尤其不要一开始就加入 `preload`。
+
+## 检查与重载
+
 ```bash
-# 检查配置语法
-nginx -t
-
-# 平滑重载配置
-systemctl reload nginx
+sudo nginx -t && sudo systemctl reload nginx
+sudo systemctl status nginx
+sudo journalctl -u nginx --since today
 ```
-每次修改配置后都要执行 `nginx -t`，避免因语法错误导致服务崩溃。
-### 2. 日志管理
-- **access.log**：记录请求、状态码、IP。
-- **error.log**：记录错误信息。
-💡 日志可能会无限增长，应配合 **logrotate** 或定期清理。
-### 3. 性能优化
-- 根据 CPU 核心数自动分配进程：`worker_processes auto;`
-- 设置单进程最大并发连接数：`worker_connections 10240;`
-- 开启 **Gzip 压缩**：
-   `gzip on; gzip_types text/plain text/css application/json application/javascript;`
-### 4. 安全性
-- 隐藏 Nginx 版本号：`server_tokens off;`
-- 配置防盗链、防刷接口。
-- 使用 **HTTPS + HSTS**，提高安全性。
-### 5. 常见问题排查
-- **80/443 端口被占用** → 检查是否有其他服务（如 Apache）。
-- **502 Bad Gateway** → 后端服务未启动或代理配置错误。
-- **缓存问题** → 通过 `add_header Cache-Control` 控制缓存策略。
-## 四、总结
-Nginx 是一款高性能的 Web 服务工具，配置灵活、功能强大。在实际使用中，我们需要注意：
-- 配置文件结构清晰，善用 `server` 和 `location`。
-- 日志需要定期维护，避免磁盘爆满。
-- 性能优化和安全配置不可忽视。
-- 修改配置后务必测试并平滑重启。
+
+把语法检查和重载写在同一条命令中，检查失败时不会执行后半段。重载会保留现有连接，比直接重启更适合常规配置更新。
+
+## 日志与排障
+
+- **404**：检查 `root`、`alias`、`try_files` 和文件权限。
+- **413**：请求体超过 `client_max_body_size`，先确认业务确实需要更大限制。
+- **499**：客户端在 Nginx 返回前断开，结合上游耗时判断。
+- **502**：上游未监听、地址错误或连接失败。
+- **504**：上游响应超时；先定位慢请求，不要只盲目增加超时。
+
+访问日志可能包含 IP、URL 参数和用户标识。设置日志轮转和保留期限，避免记录令牌、密码等敏感信息。
+
+## 性能配置
+
+`worker_processes auto;` 通常是合理起点，但 `worker_connections`、缓存、压缩和缓冲区没有通用“最佳值”。先观察连接数、响应时间、磁盘 I/O 与上游瓶颈，再做调整。
+
+启用压缩时注意代理层和应用层不要重复压缩：
+
+```nginx
+gzip on;
+gzip_vary on;
+gzip_types text/plain text/css application/json application/javascript image/svg+xml;
+```
+
+## 参考
+
+- [Nginx 反向代理模块](https://nginx.org/en/docs/http/ngx_http_proxy_module.html)
+- [Nginx HTTPS 配置](https://nginx.org/en/docs/http/configuring_https_servers.html)

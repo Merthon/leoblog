@@ -1,7 +1,8 @@
 ---
 title: "网站技术栈分析工具"
-description: "使用Python爬取网站信息，主要是查看网站使用了那些技术栈，用到requests，bs4。"
+description: "复盘一个基于 Requests、BeautifulSoup 与 SQLite 的网站技术栈识别工具。"
 publishedAt: 2025-08-05
+updatedAt: 2026-09-04
 type: technical
 tags: ["爬虫", "Python"]
 draft: false

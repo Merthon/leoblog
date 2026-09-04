@@ -1,106 +1,138 @@
 ---
 title: "Python 学习笔记（三）"
-description: "python提供了强大的模块支持，主要体现在，不仅 Python 标准库中包含了大量的模块（称为标准模块），还有大量的第三方模块。"
+description: "整理 Python 模块、包、路径与安全的文件读写方式。"
 publishedAt: 2024-12-28
+updatedAt: 2026-09-04
 type: technical
 tags: ["Python", "笔记"]
 draft: false
-readingMinutes: 7
+readingMinutes: 4
 ---
-## 模块和包
-### 什么是模块？模块化编程
-python提供了强大的模块支持，主要体现在，不仅 Python 标准库中包含了大量的模块（称为标准模块），还有大量的第三方模块。
-模块就是 Python 程序。换句话说，任何 Python 程序都可以作为模块。
-代码的可重用性体现在，当编写好一个模块后，只要编程过程中需要用到该模块中的某个功能（由变量、函数、类实现），无需做重复性的编写工作，直接在程序中导入该模块即可使用该功能。
-模块，可以理解为是对代码更高级的封装，即把能够实现某一特定功能的代码编写在同一个 .py 文件中，并将其作为一个独立的模块，这样既可以方便其它程序或脚本导入并使用，同时还能有效避免函数名和变量名发生冲突。
-举例：先创建一个hello.py文件
+
+## 模块与导入
+
+一个 `.py` 文件通常就是一个模块。把相关函数、类和常量放进模块，可以复用代码并隔离名称空间。
+
 ```python
-def say():
-   print('Hello world')
+# hello.py
+def say(name: str) -> str:
+    return f"Hello, {name}!"
 ```
-再在同一目录下创建一个say.py文件
+
 ```python
-# 导入刚刚创建好的hello
+# main.py
 import hello
-hello.say()
+
+print(hello.say("Leo"))
 ```
-运行后就是HelloWorld
-hello.py 就是一个自定义的模块（有关自定义模块，后续章节会做详细讲解），我们只需要将 hellp.py 模块导入到 say.py 文件中，就可以直接在 say.py 文件中使用模块中的资源。
 
-### 导入模块 import用法
-主要有以下两种：
-1. `import 模块名1 [as 别名1], 模块名2 [as 别名2]，…`：使用这种语法格式的 import 语句，会导入指定模块中的所有成员（包括变量、函数、类等）。不仅如此，当需要使用模块中的成员时，需用该模块名（或别名）作为前缀，否则 Python 解释器会报错。
-2. `from 模块名 import 成员名1 [as 别名1]，成员名2 [as 别名2]，…`： 使用这种语法格式的 import 语句，只会导入模块中指定的成员，而不是全部成员。同时，当程序中使用该成员时，无需附加任何前缀，直接使用成员名（或别名）即可。
-注意，用 [] 括起来的部分，可以使用，也可以省略。
-其中，第二种 import 语句也可以导入指定模块中的所有成员，即使用 form 模块名 import ＊，但不推荐。
-一般不推荐使用“from 模块 import”这种语法导入指定模块内的所有成员，因为它存在潜在的风险。比如同时导入 module1 和 module2 内的所有成员，假如这两个模块内都有一个 foo() 函数，那么当在程序中执行如下代码时：
-foo()
-上面调用的这个 foo() 函数到底是 module1 模块中的还是 module2 模块中的？因此，这种导入指定模块内所有成员的用法是有风险的。
+常见导入方式：
 
-### 包
-#### 创建包
-包其实就是文件夹，更确切的说，是一个包含“__init__.py”文件的文件夹。因此，如果我们想手动创建一个包，只需进行以下 2 步操作：
-1. 新建一个文件夹，文件夹的名称就是新建包的包名；
-2. 在该文件夹中，创建一个 __init__.py 文件（前后各有 2 个下划线‘_’），该文件中可以不编写任何代码。当然，也可以编写一些 Python 初始化代码，则当有其它程序文件导入包时，会自动执行该文件中的代码。
-#### 包的导入
-包其实本质上还是模块，因此导入模块的语法同样也适用于导入包。无论导入我们自定义的包，还是导入从他处下载的第三方包，导入方法可归结为以下 3 种：
-1. `import 包名[.模块名 [as 别名]]`
-2. `from 包名 import 模块名 [as 别名]`
-3. `from 包名.模块名 import 成员名 [as 别名]`
-用 [] 括起来的部分，是可选部分，即可以使用，也可以直接忽略。
-注意，导入包的同时，会在包目录下生成一个含有 __init__.cpython-36.pyc 文件的 __pycache__ 文件夹
+```python
+import pathlib
+import pathlib as paths
+from pathlib import Path
+```
 
-## 文件操作
-关于文件，它有两个关键属性，分别是“文件名”和“路径”。其中，文件名指的是为每个文件设定的名称，而路径则用来指明文件在计算机上的位置。
-### 绝对路径与相对路径
-明确一个文件所在的路径，有 2 种表示方式，分别是：
-- 绝对路径：总是从根文件夹开始，Window 系统中以盘符（C：、D：）作为根文件夹，而 OS X 或者 Linux 系统中以 / 作为根文件夹。
-- 相对路径：指的是文件相对于当前工作目录所在的位置。例如，当前工作目录为 "C:\Windows\System32"，若文件 demo.txt 就位于这个 System32 文件夹下，则 demo.txt 的相对路径表示为 ".\demo.txt"（其中 .\ 就表示当前所在目录）。
-在使用相对路径表示某文件所在的位置时，除了经常使用 .\ 表示当前所在目录之外，还会用到 ..\ 表示当前所在目录的父目录。
-Python os.path 模块提供了一些函数，可以实现绝对路径和相对路径之间的转换，以及检查给定的路径是否为绝对路径，比如说：
+一般不使用 `from module import *`，因为它会隐藏名称来源，也可能覆盖当前模块已有的名称。导入一个模块时，模块顶层代码会在当前进程的首次导入中执行，因此不要在顶层放置意外的网络请求或耗时任务。
 
-- 调用 os.path.abspath(path) 将返回 path 参数的绝对路径的字符串，这是将相对路径转换为绝对路径的简便方法。
-- 调用 os.path.isabs(path)，如果参数是一个绝对路径，就返回 True，如果参数是一个相对路径，就返回 False。
-- 调用 os.path.relpath(path, start) 将返回从 start 路径到 path 的相对路径的字符串。如果没有提供 start，就使用当前工作目录作为开始路径。
-- 调用 os.path.dirname(path) 将返回一个字符串，它包含 path 参数中最后一个斜杠之前的所有内容；调用 os.path.basename(path) 将返回一个字符串，它包含 path 参数中最后一个斜杠之后的所有内容。
-### 文件基本操作
-文件的操作有很多种，常见的操作包括创建、删除、修改权限、读取、写入等，这些操作可大致分为以下 2 类：
+## 包
 
-1. 删除、修改权限：作用于文件本身，属于系统级操作。
-2. 写入、读取：是文件最常用的操作，作用于文件的内容，属于应用级操作。
-文件的应用级操作可以分为以下 3 步，每一步都需要借助对应的函数实现：
-1. 打开文件：使用 open() 函数，该函数会返回一个文件对象；
-2. 对已打开文件做读/写操作：读取文件内容可使用 read()、readline() 以及 readlines() 函数；向文件中写入内容，可以使用 write() 函数。
-3. 关闭文件：完成对文件的读/写操作之后，最后需要关闭文件，可以使用 close() 函数。
-一个文件，必须在打开之后才能对其进行操作，并且在操作结束之后，还应该将其关闭，这 3 步的顺序不能打乱。
-#### open()函数详解：打开指定文件
-首先需要创建或者打开指定的文件，并创建一个文件对象，而这些工作可以通过内置的 open() 函数实现。
-open() 函数用于创建或打开指定文件，该函数的常用语法格式如下：
-file = open(file_name [, mode='r' [ , buffering=-1 [ , encoding = None ]]])
-此格式中，用 [] 括起来的部分为可选参数，即可以使用也可以省略。其中，各个参数所代表的含义如下：
-- file：表示要创建的文件对象。
-- file_name：要创建或打开文件的文件名称，该名称要用引号（单引号或双引号都可以）括起来。需要注意的是，如果要打开的文件和当前执行的代码文件位于同一目录，则直接写文件名即可；否则，此参数需要指定打开文件所在的完整路径。
-- mode：可选参数，用于指定文件的打开模式。可选的打开模式如表 1 所示。如果不写，则默认以只读（r）模式打开文件。
-- buffering：可选参数，用于指定对文件做读写操作时，是否使用缓冲区（本节后续会详细介绍）。
-- encoding：手动设定打开文件时所使用的编码格式，不同平台的 ecoding 参数值也不同，以 Windows 为例，其默认为 cp936（实际上就是 GBK 编码）。
-#### read()函数：按字节（字符）读取文件
- 3 种函数，它们都可以帮我们实现读取文件中数据的操作：
-1. read() 函数：逐个字节或者字符读取文件中的内容；
-2. readline() 函数：逐行读取文件中的内容；
-3. readlines() 函数：一次性读取文件中多行内容。
-#### readline()和readlines()函数：按行读取文件
-和 read() 函数不同，这 2 个函数都以“行”作为读取单位，即每次都读取目标文件中的一行。对于读取以文本格式打开的文件，读取一行很好理解；对于读取以二进制格式打开的文件，它们会以“\n”作为读取一行的标志。
-#### write()和writelines()：向文件中写入数据
-文件对象提供了 write() 函数，可以向文件中写入指定内容。该函数的语法格式如下：
-file.write(string)
-其中，file 表示已经打开的文件对象；string 表示要写入文件的字符串（或字节串，仅适用写入二进制文件中）。
-如果打开文件模式中包含 w（写入），那么向文件中写入内容时，会先清空原文件中的内容，然后再写入新的内容。
-##### writelines()函数
-Python 的文件对象中，不仅提供了 write() 函数，还提供了 writelines() 函数，可以实现将字符串列表写入文件中。
-需要注意的是，使用 writelines() 函数向文件中写入多行数据时，不会自动给各行添加换行符。
-#### close函数关闭文件
-close() 函数是专门用来关闭已打开文件的，其语法格式也很简单，如下所示：
+包把多个模块组织在同一个命名空间下。传统包通常包含 `__init__.py`；现代 Python 也支持没有该文件的命名空间包，但普通项目保留它通常更直观。
 
-file.close()
+```text
+app/
+├── __init__.py
+├── models.py
+└── services/
+    ├── __init__.py
+    └── users.py
+```
 
-其中，file 表示已打开的文件对象。
+对应的导入可以写成：
+
+```python
+from app.services.users import find_user
+```
+
+不要依赖某个特定版本名称的 `.pyc` 文件。Python 会自行管理 `__pycache__`，项目通常也不把它提交进 Git。
+
+## 使用 `pathlib` 处理路径
+
+`pathlib.Path` 比手工拼接 `/` 或 `\\` 更适合跨平台代码：
+
+```python
+from pathlib import Path
+
+project_dir = Path(__file__).resolve().parent
+data_file = project_dir / "data" / "notes.txt"
+
+print(data_file.name)
+print(data_file.parent)
+print(data_file.exists())
+```
+
+相对路径默认相对于进程的当前工作目录，而不是当前源码文件。需要稳定定位项目资源时，应从 `__file__`、明确配置或应用资源 API 推导路径。
+
+## 文本文件读写
+
+使用 `with` 会在离开代码块时关闭文件，即使中途抛出异常也一样：
+
+```python
+from pathlib import Path
+
+path = Path("notes.txt")
+
+with path.open("r", encoding="utf-8") as file:
+    content = file.read()
+```
+
+常见模式：
+
+| 模式 | 含义 |
+| --- | --- |
+| `r` | 读取，文件必须存在 |
+| `w` | 写入，文件存在时会清空 |
+| `a` | 追加到文件末尾 |
+| `x` | 新建并写入，文件已存在时失败 |
+| `b` | 与其他模式组合，表示二进制模式 |
+
+写入文本时显式声明编码：
+
+```python
+lines = ["第一行\n", "第二行\n"]
+
+with path.open("w", encoding="utf-8", newline="") as file:
+    file.writelines(lines)
+```
+
+`writelines()` 不会自动添加换行符。读取大文件时也不要无条件调用 `read()` 或 `readlines()` 把全部内容放入内存，可以逐行迭代：
+
+```python
+with path.open(encoding="utf-8") as file:
+    for line in file:
+        process(line.rstrip("\n"))
+```
+
+## 二进制文件与 JSON
+
+图片、压缩包等二进制文件使用 `rb` / `wb`，读写值为 `bytes`。结构化数据不要依赖 `str(dict)`，使用明确格式：
+
+```python
+import json
+from pathlib import Path
+
+path = Path("profile.json")
+profile = {"name": "Leo", "skills": ["Python", "Go"]}
+
+with path.open("w", encoding="utf-8") as file:
+    json.dump(profile, file, ensure_ascii=False, indent=2)
+```
+
+处理用户提供的路径时，应限制允许访问的目录，并警惕 `../` 路径穿越。反序列化不可信数据时不要使用 `pickle`。
+
+## 参考
+
+- [Python 模块](https://docs.python.org/3/tutorial/modules.html)
+- [`pathlib` 文档](https://docs.python.org/3/library/pathlib.html)
+- [文件对象与 `open()`](https://docs.python.org/3/library/functions.html#open)
