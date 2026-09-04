@@ -11,11 +11,9 @@ const [writing, reading, projects] = await Promise.all([
   getProjects(),
 ]);
 
-const featured = writing.find((entry) => entry.id === 'why-personal-website')
-  ?? writing.find((entry) => entry.data.featured)
-  ?? writing[0];
-const recentWriting = writing.find((entry) => entry.id === 'how-to-write-complex-problems') ?? writing[0];
-const recentReading = reading.find((entry) => entry.id === 'pragmatic-programmer') ?? reading[0];
+const featured = writing.find((entry) => entry.data.featured) ?? writing[0];
+const recentWriting = writing[0];
+const recentReading = reading[0];
 const recentProject = projects.find((entry) => entry.id === 'leo-log') ?? projects[0];
 const recent = [
   recentWriting && {
@@ -66,20 +64,22 @@ const recent = [
       </div>
     </section>
 
-    <section class="connections">
-      <SectionHeading title="内容之间" accent />
-      <div class="connection-flow">
-        <a href="/reading/philosophy-of-software-design/">
-          <span>阅读启发</span>
-          <strong>来自读书笔记的沉淀</strong>
-        </a>
-        <span class="flow-arrow" aria-hidden="true">··············································→</span>
-        <a href="/projects/leo-log/">
-          <span>项目实践</span>
-          <strong>在构建中验证与落地</strong>
-        </a>
-      </div>
-    </section>
+    {recentReading && recentProject && (
+      <section class="connections">
+        <SectionHeading title="内容之间" accent />
+        <div class="connection-flow">
+          <a href={`/reading/${recentReading.id}/`}>
+            <span>阅读启发</span>
+            <strong>{recentReading.data.title}</strong>
+          </a>
+          <span class="flow-arrow" aria-hidden="true">··············································→</span>
+          <a href={`/projects/${recentProject.id}/`}>
+            <span>项目实践</span>
+            <strong>{recentProject.data.title}</strong>
+          </a>
+        </div>
+      </section>
+    )}
 
     <section class="mobile-now">
       <SectionHeading title="NOW" accent />

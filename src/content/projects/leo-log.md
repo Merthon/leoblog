@@ -9,8 +9,8 @@ repository: https://github.com/Merthon/leoblog
 problem: 如何长期保存写作、阅读记录与项目复盘。
 decisions: [内容优先, 静态生成, 保持可迁移]
 featured: true
-relatedWriting: [why-personal-website, how-to-write-complex-problems]
-relatedReadings: [philosophy-of-software-design]
+relatedWriting: []
+relatedReadings: []
 ---
 
 leoblog 是这个网站本身，也是一次关于长期维护的实践。

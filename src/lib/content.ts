@@ -23,7 +23,7 @@ export async function getPublishedWriting() {
 }
 
 export async function getReadingNotes() {
-  const entries = await getCollection('reading');
+  const entries = await getCollection('reading', ({ data }) => !data.draft);
   return entries.sort((a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf());
 }
 

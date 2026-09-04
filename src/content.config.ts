@@ -30,6 +30,7 @@ const reading = defineCollection({
     finishedAt: z.coerce.date().optional(),
     publishedAt: z.coerce.date(),
     takeaway: z.string(),
+    draft: z.boolean().default(false),
     tags: z.array(z.string()).default([]),
     relatedWriting: z.array(z.string()).default([]),
     relatedProjects: z.array(z.string()).default([]),
