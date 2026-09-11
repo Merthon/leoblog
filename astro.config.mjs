@@ -12,6 +12,13 @@ const site = process.env.SITE_URL || vercelProductionUrl || 'https://example.com
 export default defineConfig({
   site,
   output: 'static',
+  i18n: {
+    locales: ['zh-CN', 'en'],
+    defaultLocale: 'zh-CN',
+    routing: {
+      prefixDefaultLocale: false,
+    },
+  },
   integrations: [mdx(), sitemap()],
   markdown: {
     shikiConfig: {

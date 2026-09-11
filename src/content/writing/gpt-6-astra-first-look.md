@@ -7,6 +7,7 @@ tags: ["AI", "OpenAI", "智能体"]
 draft: false
 featured: true
 readingMinutes: 3
+translationKey: gpt-6-astra-first-look
 ---
 
 模型发布时，人们习惯先找跑分、上下文长度和价格。GPT-6 Astra 当然也有这些数字，但我更在意另一件事：它开始认真处理真实工作里那些“不整齐”的部分。

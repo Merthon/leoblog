@@ -1,19 +1,23 @@
 ---
 import Icon from '../ui/Icon.astro';
-import { formatDate, writingTypeLabels, type WritingEntry } from '../../lib/content';
+import { formatDate, formatDateEn, writingTypeLabels, writingTypeLabelsEn, type WritingEntry, type WritingEnEntry } from '../../lib/content';
+import type { SiteLocale } from '../../i18n/ui';
 
 interface Props {
-  entry: WritingEntry;
+  entry: WritingEntry | WritingEnEntry;
   showDescription?: boolean;
   isNew?: boolean;
+  locale?: SiteLocale;
 }
 
-const { entry, showDescription = true, isNew = false } = Astro.props;
-const typeLabel = writingTypeLabels[entry.data.type];
+const { entry, showDescription = true, isNew = false, locale = 'zh-CN' } = Astro.props;
+const isEnglish = locale === 'en';
+const typeLabel = isEnglish ? writingTypeLabelsEn[entry.data.type] : writingTypeLabels[entry.data.type];
 const visibleTags = entry.data.tags.filter((tag) => tag !== typeLabel).slice(0, 2);
+const href = `${isEnglish ? '/en' : ''}/writing/${entry.id}/`;
 ---
 
-<a class="writing-row" href={`/writing/${entry.id}/`}>
+<a class="writing-row" href={href}>
   <div class="row-copy">
     <div class="title-line">
       <h3>{entry.data.title}</h3>
@@ -22,8 +26,8 @@ const visibleTags = entry.data.tags.filter((tag) => tag !== typeLabel).slice(0, 
     {showDescription && <p>{entry.data.description}</p>}
   </div>
   <div class="meta mono">
-    <span>{formatDate(entry.data.publishedAt)}</span>
-    <span>{entry.data.readingMinutes} 分钟</span>
+    <span>{isEnglish ? formatDateEn(entry.data.publishedAt) : formatDate(entry.data.publishedAt)}</span>
+    <span>{entry.data.readingMinutes} {isEnglish ? 'min' : '分钟'}</span>
   </div>
   <div class="tags">
     <span>{typeLabel}</span>

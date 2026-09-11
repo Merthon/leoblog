@@ -9,7 +9,7 @@ const current = notes.find((entry) => entry.data.status === 'reading');
 const indexed = notes.filter((entry) => entry.id !== current?.id);
 ---
 
-<BaseLayout title="阅读笔记" description="阅读不是收藏书名，而是留下改变判断的部分。" active="reading">
+<BaseLayout title="阅读笔记" description="阅读不是收藏书名，而是留下改变判断的部分。" active="reading" languageHref="/en/reading/" alternatePath="/en/reading/">
   <div class="page-content">
     <h1 class="page-title">阅读笔记</h1>
     <p class="page-description">阅读不是收藏书名，而是留下改变判断的部分。</p>

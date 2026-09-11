@@ -1,34 +1,30 @@
 ---
 import { render, type CollectionEntry } from 'astro:content';
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import RelatedContent from '../../components/content/RelatedContent.astro';
-import { formatDate, getProjects, getPublishedWriting, getPublishedWritingEn, getReadingNotes, writingTypeLabels } from '../../lib/content';
-import '../../styles/content.css';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import RelatedContent from '../../../components/content/RelatedContent.astro';
+import { formatDateEn, getProjectsEn, getPublishedWriting, getPublishedWritingEn, writingTypeLabelsEn } from '../../../lib/content';
+import '../../../styles/content.css';
 
 export async function getStaticPaths() {
-  const entries = await getPublishedWriting();
+  const entries = await getPublishedWritingEn();
   return entries.map((post) => ({ params: { slug: post.id }, props: { post } }));
 }
 
-interface Props { post: CollectionEntry<'writing'> }
+interface Props { post: CollectionEntry<'writingEn'> }
 const { post } = Astro.props;
 const { Content, headings } = await render(post);
-const [allWriting, englishWriting, readings, projects] = await Promise.all([getPublishedWriting(), getPublishedWritingEn(), getReadingNotes(), getProjects()]);
+const [allWriting, chineseWriting, projects] = await Promise.all([getPublishedWritingEn(), getPublishedWriting(), getProjectsEn()]);
 const translation = post.data.translationKey
-  ? englishWriting.find((entry) => entry.data.translationKey === post.data.translationKey)
+  ? chineseWriting.find((entry) => entry.data.translationKey === post.data.translationKey)
   : undefined;
-const englishHref = translation ? `/en/writing/${translation.id}/` : '/en/writing/';
+const chineseHref = translation ? `/writing/${translation.id}/` : '/writing/';
 const index = allWriting.findIndex((entry) => entry.id === post.id);
 const newer = index > 0 ? allWriting[index - 1] : undefined;
 const older = index < allWriting.length - 1 ? allWriting[index + 1] : undefined;
 const related = [
-  ...post.data.relatedReadings.map((id) => {
-    const entry = readings.find((item) => item.id === id);
-    return entry && { label: '阅读笔记', title: entry.data.title, href: `/reading/${entry.id}/` };
-  }),
   ...post.data.relatedProjects.map((id) => {
     const entry = projects.find((item) => item.id === id);
-    return entry && { label: '相关项目', title: entry.data.title, href: `/projects/${entry.id}/` };
+    return entry && { label: 'Related project', title: entry.data.title, href: `/en/projects/${entry.id}/` };
   }),
 ].filter((item): item is NonNullable<typeof item> => Boolean(item));
 const toc = headings.filter((heading) => heading.depth === 2 || heading.depth === 3);
@@ -39,24 +35,25 @@ const toc = headings.filter((heading) => heading.depth === 2 || heading.depth ==
   description={post.data.description}
   active="writing"
   article
-  languageHref={englishHref}
-  alternatePath={translation ? englishHref : undefined}
+  locale="en"
+  languageHref={chineseHref}
+  alternatePath={translation ? chineseHref : undefined}
 >
   <article class="article-page page-content">
     <header class="article-header">
-      <div class="article-type">文章 / {writingTypeLabels[post.data.type]}</div>
+      <div class="article-type">Writing / {writingTypeLabelsEn[post.data.type]}</div>
       <h1>{post.data.title}</h1>
       <p>{post.data.description}</p>
       <div class="article-meta mono">
-        <time datetime={post.data.publishedAt.toISOString()}>{formatDate(post.data.publishedAt)}</time>
-        <span>阅读 {post.data.readingMinutes} 分钟</span>
-        {post.data.updatedAt && <span>最后修订 {formatDate(post.data.updatedAt)}</span>}
+        <time datetime={post.data.publishedAt.toISOString()}>{formatDateEn(post.data.publishedAt)}</time>
+        <span>{post.data.readingMinutes} min read</span>
+        {post.data.updatedAt && <span>Revised {formatDateEn(post.data.updatedAt)}</span>}
       </div>
     </header>
 
     {toc.length > 0 && (
       <details class="mobile-toc">
-        <summary>目录 · {toc.filter((item) => item.depth === 2).length} 个章节</summary>
+        <summary>Contents · {toc.filter((item) => item.depth === 2).length} sections</summary>
         <ol>{toc.map((item) => <li class:list={{ nested: item.depth === 3 }}><a href={`#${item.slug}`}>{item.text}</a></li>)}</ol>
       </details>
     )}
@@ -66,25 +63,25 @@ const toc = headings.filter((heading) => heading.depth === 2 || heading.depth ==
         <div class="prose" data-pagefind-body><Content /></div>
         {post.data.updatedAt && (
           <div class="mobile-revision">
-            <strong>修订 {formatDate(post.data.updatedAt)}</strong>
-            <p>复核技术说明、示例与表达。</p>
+            <strong>Revised {formatDateEn(post.data.updatedAt)}</strong>
+            <p>Technical notes, examples, and wording reviewed.</p>
           </div>
         )}
-        <div class="mobile-related"><RelatedContent items={related} title="相关笔记" /></div>
-        <nav class="article-pagination" aria-label="相邻文章">
-          {newer ? <a href={`/writing/${newer.id}/`}>← 上一篇<span>{newer.data.title}</span></a> : <span></span>}
-          {older ? <a class="next" href={`/writing/${older.id}/`}>下一篇 →<span>{older.data.title}</span></a> : <span></span>}
+        <div class="mobile-related"><RelatedContent items={related} title="Related notes" /></div>
+        <nav class="article-pagination" aria-label="Adjacent articles">
+          {newer ? <a href={`/en/writing/${newer.id}/`}>← Newer<span>{newer.data.title}</span></a> : <span></span>}
+          {older ? <a class="next" href={`/en/writing/${older.id}/`}>Older →<span>{older.data.title}</span></a> : <span></span>}
         </nav>
       </div>
 
       {toc.length > 0 && (
-        <aside class="desktop-toc" aria-label="文章目录">
-          <h2>目录</h2>
+        <aside class="desktop-toc" aria-label="Article contents">
+          <h2>Contents</h2>
           <ol>{toc.map((item, itemIndex) => <li class:list={{ nested: item.depth === 3, current: itemIndex === 0 }}><a href={`#${item.slug}`}>{item.text}</a></li>)}</ol>
-          {post.data.updatedAt && <div class="revision"><strong>修订 {formatDate(post.data.updatedAt)}</strong><p>复核技术说明、示例与表达。</p></div>}
+          {post.data.updatedAt && <div class="revision"><strong>Revised {formatDateEn(post.data.updatedAt)}</strong><p>Technical notes, examples, and wording reviewed.</p></div>}
           {related.length > 0 && (
             <section class="desktop-related" aria-labelledby="desktop-related-title">
-              <h2 id="desktop-related-title">相关笔记</h2>
+              <h2 id="desktop-related-title">Related notes</h2>
               <ul>{related.map((item) => <li><a href={item.href}>{item.title}</a></li>)}</ul>
             </section>
           )}
@@ -99,13 +96,13 @@ const toc = headings.filter((heading) => heading.depth === 2 || heading.depth ==
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'code-copy';
-    button.textContent = '复制';
-    button.setAttribute('aria-label', '复制代码');
+    button.textContent = 'Copy';
+    button.setAttribute('aria-label', 'Copy code');
     button.addEventListener('click', async () => {
       const code = block.querySelector('code')?.textContent ?? block.textContent ?? '';
       await navigator.clipboard.writeText(code);
-      button.textContent = '已复制';
-      window.setTimeout(() => { button.textContent = '复制'; }, 1600);
+      button.textContent = 'Copied';
+      window.setTimeout(() => { button.textContent = 'Copy'; }, 1600);
     });
     block.append(button);
   });

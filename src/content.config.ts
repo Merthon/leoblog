@@ -16,6 +16,25 @@ const writing = defineCollection({
     readingMinutes: z.number().int().positive().default(8),
     relatedReadings: z.array(z.string()).default([]),
     relatedProjects: z.array(z.string()).default([]),
+    translationKey: z.string().optional(),
+  }),
+});
+
+const writingEn = defineCollection({
+  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/writing-en' }),
+  schema: z.object({
+    title: z.string(),
+    description: z.string(),
+    publishedAt: z.coerce.date(),
+    updatedAt: z.coerce.date().optional(),
+    type: z.enum(['technical', 'thinking', 'essay']),
+    tags: z.array(z.string()).default([]),
+    draft: z.boolean().default(false),
+    featured: z.boolean().default(false),
+    readingMinutes: z.number().int().positive().default(8),
+    relatedReadings: z.array(z.string()).default([]),
+    relatedProjects: z.array(z.string()).default([]),
+    translationKey: z.string(),
   }),
 });
 
@@ -53,7 +72,28 @@ const projects = defineCollection({
     featured: z.boolean().default(false),
     relatedWriting: z.array(z.string()).default([]),
     relatedReadings: z.array(z.string()).default([]),
+    translationKey: z.string().optional(),
   }),
 });
 
-export const collections = { writing, reading, projects };
+const projectsEn = defineCollection({
+  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/projects-en' }),
+  schema: z.object({
+    title: z.string(),
+    description: z.string(),
+    status: z.enum(['building', 'maintaining', 'completed', 'archived']),
+    stack: z.array(z.string()),
+    startedAt: z.coerce.date(),
+    updatedAt: z.coerce.date(),
+    repository: z.url().optional(),
+    website: z.url().optional(),
+    problem: z.string(),
+    decisions: z.array(z.string()).default([]),
+    featured: z.boolean().default(false),
+    relatedWriting: z.array(z.string()).default([]),
+    relatedReadings: z.array(z.string()).default([]),
+    translationKey: z.string(),
+  }),
+});
+
+export const collections = { writing, writingEn, reading, projects, projectsEn };

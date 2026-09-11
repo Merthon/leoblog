@@ -35,6 +35,26 @@ export const SITE = {
   },
 } as const;
 
+export const SITE_EN = {
+  tagline: 'Notes on software, reading, and building',
+  intro: 'I like breaking complicated problems into smaller ones, and I use writing to test my own judgment. This site keeps track of what I read, what I build, and the questions I have not resolved yet.',
+  description: 'A developer’s notes on software, reading, and building.',
+  locale: 'en',
+  role: 'developer',
+  now: {
+    updateRhythm: 'Usually updated on weekends',
+    doing: ['Refining this website', 'Organizing old reading notes'],
+    reading: [] as string[],
+    focuses: ['Frontier AI', 'Knowledge management'],
+    plans: ['Finish the first stable version', 'Write a project retrospective'],
+    aboutSite: 'It is not a showcase. It is a personal record designed to stay useful over time.',
+    principles: ['Own the content', 'Keep links durable', 'Design with restraint'],
+  },
+  project: {
+    status: 'Building',
+  },
+} as const;
+
 export const SITE_TITLE = `${SITE.displayName} / ${SITE.titleSuffix}`;
 export const DISPLAY_UPDATED_AT = SITE.now.updatedAt.replaceAll('-', '.');
 
@@ -45,4 +65,10 @@ export const CURRENT_STATUS = [
   ...SITE.now.doing.map((item, index) => ({ text: withDoingPrefix(item), current: index === 0 })),
   ...SITE.now.reading.map((item) => ({ text: withReadingPrefix(item), current: false })),
   ...(SITE.now.updateRhythm ? [{ text: SITE.now.updateRhythm, current: false }] : []),
+].slice(0, 3);
+
+export const CURRENT_STATUS_EN = [
+  ...SITE_EN.now.doing.map((text, index) => ({ text, current: index === 0 })),
+  ...SITE_EN.now.reading.map((text) => ({ text: `Reading ${text}`, current: false })),
+  ...(SITE_EN.now.updateRhythm ? [{ text: SITE_EN.now.updateRhythm, current: false }] : []),
 ].slice(0, 3);

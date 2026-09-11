@@ -1,9 +1,9 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import WritingRow from '../../components/content/WritingRow.astro';
-import { getPublishedWriting } from '../../lib/content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import WritingRow from '../../../components/content/WritingRow.astro';
+import { getPublishedWritingEn } from '../../../lib/content';
 
-const entries = await getPublishedWriting();
+const entries = await getPublishedWritingEn();
 const yearGroups = entries.reduce<Array<{ year: number; entries: typeof entries }>>((groups, entry) => {
   const year = entry.data.publishedAt.getFullYear();
   const current = groups.at(-1);
@@ -13,27 +13,22 @@ const yearGroups = entries.reduce<Array<{ year: number; entries: typeof entries 
 }, []);
 ---
 
-<BaseLayout title="文章" description="记录技术决策，也记录那些还没有标准答案的问题。" active="writing" languageHref="/en/writing/" alternatePath="/en/writing/">
+<BaseLayout title="Writing" description="Technical decisions, open questions, and notes from building." active="writing" locale="en" languageHref="/writing/" alternatePath="/writing/">
   <div class="page-content">
-    <h1 class="page-title">文章</h1>
-    <p class="page-description">记录技术决策，也记录那些还没有标准答案的问题。</p>
-    <div class="filters" role="group" aria-label="筛选文章类型">
-      <button class="active" type="button" data-filter="all">全部</button>
-      <button type="button" data-filter="technical">技术</button>
-      <button type="button" data-filter="thinking">思考</button>
-      <button type="button" data-filter="essay">随笔</button>
+    <h1 class="page-title">Writing</h1>
+    <p class="page-description">Technical decisions, open questions, and notes from building.</p>
+    <p class="edition-note" id="translation-note">The English edition is curated. Some older notes are currently available only in Chinese.</p>
+    <div class="filters" role="group" aria-label="Filter articles by type">
+      <button class="active" type="button" data-filter="all">All</button>
+      <button type="button" data-filter="technical">Technical</button>
+      <button type="button" data-filter="thinking">Thinking</button>
+      <button type="button" data-filter="essay">Essays</button>
     </div>
     <div class="archives">
       {yearGroups.map((group) => (
         <section class="archive" aria-labelledby={`year-${group.year}`}>
           <h2 class="year-heading mono" id={`year-${group.year}`}>{group.year}</h2>
-          <div class="writing-list">
-            {group.entries.map((entry) => (
-              <div data-entry-type={entry.data.type}>
-                <WritingRow entry={entry} isNew={entry.id === entries[0]?.id} />
-              </div>
-            ))}
-          </div>
+          <div class="writing-list">{group.entries.map((entry) => <div data-entry-type={entry.data.type}><WritingRow entry={entry} isNew={entry.id === entries[0]?.id} locale="en" /></div>)}</div>
         </section>
       ))}
     </div>
@@ -44,29 +39,22 @@ const yearGroups = entries.reduce<Array<{ year: number; entries: typeof entries 
   const buttons = [...document.querySelectorAll<HTMLButtonElement>('[data-filter]')];
   const entries = [...document.querySelectorAll<HTMLElement>('[data-entry-type]')];
   const allowedFilters = new Set(['all', 'technical', 'thinking', 'essay']);
-
   function applyFilter(filter: string, updateUrl = true) {
     const resolved = allowedFilters.has(filter) ? filter : 'all';
     buttons.forEach((item) => item.classList.toggle('active', item.dataset.filter === resolved));
     entries.forEach((entry) => { entry.hidden = resolved !== 'all' && entry.dataset.entryType !== resolved; });
-
     if (updateUrl) {
       const url = new URL(window.location.href);
-      if (resolved === 'all') url.searchParams.delete('type');
-      else url.searchParams.set('type', resolved);
+      if (resolved === 'all') url.searchParams.delete('type'); else url.searchParams.set('type', resolved);
       history.replaceState(null, '', url);
     }
   }
-
   applyFilter(new URL(window.location.href).searchParams.get('type') ?? 'all', false);
-  buttons.forEach((button) => {
-    button.addEventListener('click', () => {
-      applyFilter(button.dataset.filter ?? 'all');
-    });
-  });
+  buttons.forEach((button) => button.addEventListener('click', () => applyFilter(button.dataset.filter ?? 'all')));
 </script>
 
 <style>
+  .edition-note { max-width: 42rem; padding-left: 0.85rem; margin: calc(-1 * var(--space-6)) 0 var(--space-8); border-left: 2px solid var(--color-accent); color: var(--color-muted); font-size: 0.82rem; }
   .filters { display: flex; gap: 2.5rem; border-bottom: 1px solid var(--color-line); }
   button { position: relative; padding: 0.75rem 0 1rem; background: transparent; color: var(--color-muted); cursor: pointer; }
   button::after { content: ""; position: absolute; right: 0; bottom: -1px; left: 0; height: 2px; background: transparent; }
@@ -78,6 +66,7 @@ const yearGroups = entries.reduce<Array<{ year: number; entries: typeof entries 
   .year-heading { padding-top: 2.35rem; margin: 0; color: var(--color-muted); font-size: 0.85rem; font-weight: 400; }
   [hidden] { display: none; }
   @media (max-width: 900px) {
+    .edition-note { margin-top: calc(-1 * var(--space-4)); }
     .filters { justify-content: space-between; gap: 1.25rem; overflow-x: auto; }
     .archives { margin-top: 0; }
     .archive { display: block; }

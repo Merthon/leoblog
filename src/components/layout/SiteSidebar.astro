@@ -1,29 +1,39 @@
 ---
 import Icon from '../ui/Icon.astro';
-import { CURRENT_STATUS, DISPLAY_UPDATED_AT, SITE } from '../../config/site';
+import { CURRENT_STATUS, CURRENT_STATUS_EN, DISPLAY_UPDATED_AT, SITE, SITE_EN } from '../../config/site';
+import { layoutText, navigation, type SiteLocale } from '../../i18n/ui';
 
 interface Props {
   active: 'index' | 'writing' | 'reading' | 'projects' | 'now';
+  locale?: SiteLocale;
+  languageHref: string;
 }
 
-const { active } = Astro.props;
-const nav = [
-  { id: 'index', label: '索引', href: '/', icon: 'index' },
-  { id: 'writing', label: '文章', href: '/writing/', icon: 'writing' },
-  { id: 'reading', label: '阅读', href: '/reading/', icon: 'reading' },
-  { id: 'projects', label: '项目', href: '/projects/', icon: 'projects' },
-  { id: 'now', label: '现在', href: '/now/', icon: 'now' },
-] as const;
+const { active, locale = 'zh-CN', languageHref } = Astro.props;
+const isEnglish = locale === 'en';
+const nav = navigation[locale];
+const text = layoutText[locale];
+const status = isEnglish ? CURRENT_STATUS_EN : CURRENT_STATUS;
+const homeHref = isEnglish ? '/en/' : '/';
+const tagline = isEnglish ? SITE_EN.tagline : SITE.tagline;
+const rssHref = isEnglish ? '/en/rss.xml' : '/rss.xml';
 ---
 
 <aside class="sidebar">
   <div>
-    <a class="identity" href="/" aria-label={`${SITE.displayName} 首页`}>
-      <strong>{SITE.logoText}</strong>
-      <span>{SITE.tagline}</span>
-    </a>
+    <div class="identity-block">
+      <a class="identity" href={homeHref} aria-label={`${SITE.displayName} ${text.homeLabel}`}>
+        <strong>{SITE.logoText}</strong>
+        <span>{tagline}</span>
+      </a>
+      <nav class="language-switch" aria-label="Language">
+        {isEnglish ? <a href={languageHref} hreflang="zh-CN">中文</a> : <span aria-current="true">中文</span>}
+        <i aria-hidden="true">/</i>
+        {isEnglish ? <span aria-current="true">EN</span> : <a href={languageHref} hreflang="en">EN</a>}
+      </nav>
+    </div>
 
-    <nav aria-label="主导航">
+    <nav class="primary-nav" aria-label={text.navLabel}>
       {nav.map((item) => (
         <a class:list={['nav-link', { active: active === item.id }]} href={item.href} aria-current={active === item.id ? 'page' : undefined}>
           <Icon name={item.icon} size={19} />
@@ -35,19 +45,19 @@ const nav = [
     <section class="now-summary" aria-labelledby="sidebar-now">
       <h2 id="sidebar-now">NOW</h2>
       <ul>
-        {CURRENT_STATUS.map((item) => <li><span class:list={['status-dot', { 'is-current': item.current }]}></span><span>{item.text}</span></li>)}
+        {status.map((item) => <li><span class:list={['status-dot', { 'is-current': item.current }]}></span><span>{item.text}</span></li>)}
       </ul>
     </section>
   </div>
 
   <footer>
-    <div class="socials" aria-label="站外链接">
-      <a href={`mailto:${SITE.contact.email}`} aria-label="发送邮件"><Icon name="mail" /></a>
+    <div class="socials" aria-label={text.externalLinks}>
+      <a href={`mailto:${SITE.contact.email}`} aria-label={text.email}><Icon name="mail" /></a>
       <a href={SITE.contact.githubUrl} aria-label="GitHub"><Icon name="github" /></a>
       <a href={SITE.contact.extraLink.url} aria-label={SITE.contact.extraLink.label}><Icon name="x" /></a>
-      <a href="/rss.xml" aria-label="RSS 订阅"><Icon name="rss" /></a>
+      <a href={rssHref} aria-label={text.rss}><Icon name="rss" /></a>
     </div>
-    <p>最后更新 <time datetime={SITE.now.updatedAt}>{DISPLAY_UPDATED_AT}</time></p>
+    <p>{text.updated} <time datetime={SITE.now.updatedAt}>{DISPLAY_UPDATED_AT}</time></p>
   </footer>
 </aside>
 
@@ -66,14 +76,17 @@ const nav = [
     background: var(--color-sidebar);
   }
 
-  .identity {
-    display: block;
+  .identity-block {
+    position: relative;
     padding-bottom: 2rem;
     border-bottom: 1px solid var(--color-line);
   }
 
+  .identity { display: block; }
+
   .identity strong {
     display: block;
+    padding-right: 4.75rem;
     margin-bottom: 0.65rem;
     font-family: var(--font-display);
     font-size: 2.7rem;
@@ -87,7 +100,23 @@ const nav = [
     font-size: 0.78rem;
   }
 
-  nav {
+  .language-switch {
+    position: absolute;
+    top: 0.15rem;
+    right: 0;
+    display: flex;
+    gap: 0.4rem;
+    color: var(--color-muted);
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    line-height: 1;
+  }
+
+  .language-switch a:hover { color: var(--color-accent); }
+  .language-switch span[aria-current="true"] { color: var(--color-ink); }
+  .language-switch i { color: var(--color-soft); font-style: normal; }
+
+  .primary-nav {
     display: grid;
     gap: 0.25rem;
     padding: 1.6rem 0;

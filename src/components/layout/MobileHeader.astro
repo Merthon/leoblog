@@ -1,33 +1,38 @@
 ---
 import Icon from '../ui/Icon.astro';
-import { CURRENT_STATUS, DISPLAY_UPDATED_AT, SITE } from '../../config/site';
+import { CURRENT_STATUS, CURRENT_STATUS_EN, DISPLAY_UPDATED_AT, SITE } from '../../config/site';
+import { layoutText, navigation, type SiteLocale } from '../../i18n/ui';
 
 interface Props {
   active: 'index' | 'writing' | 'reading' | 'projects' | 'now';
+  locale?: SiteLocale;
+  languageHref: string;
 }
 
-const { active } = Astro.props;
-const nav = [
-  { id: 'index', label: '索引', href: '/', icon: 'index' },
-  { id: 'writing', label: '文章', href: '/writing/', icon: 'writing' },
-  { id: 'reading', label: '阅读', href: '/reading/', icon: 'reading' },
-  { id: 'projects', label: '项目', href: '/projects/', icon: 'projects' },
-  { id: 'now', label: '现在', href: '/now/', icon: 'now' },
-] as const;
+const { active, locale = 'zh-CN', languageHref } = Astro.props;
+const isEnglish = locale === 'en';
+const nav = navigation[locale];
+const text = layoutText[locale];
+const status = isEnglish ? CURRENT_STATUS_EN : CURRENT_STATUS;
+const homeHref = isEnglish ? '/en/' : '/';
+const rssHref = isEnglish ? '/en/rss.xml' : '/rss.xml';
 ---
 
 <header class="mobile-header">
-  <a class="logo" href="/">{SITE.logoText}</a>
-  <button type="button" data-menu-open aria-label="打开导航菜单">MENU</button>
+  <a class="logo" href={homeHref}>{SITE.logoText}</a>
+  <div class="header-actions">
+    <a class="mobile-language" href={languageHref} hreflang={isEnglish ? 'zh-CN' : 'en'}>{isEnglish ? '中文' : 'EN'}</a>
+    <button type="button" data-menu-open aria-label={text.openMenu}>MENU</button>
+  </div>
 </header>
 
 <dialog class="mobile-menu" data-mobile-menu>
   <div class="menu-header">
-    <a class="logo" href="/">{SITE.logoText}</a>
-    <button type="button" data-menu-close aria-label="关闭导航菜单">CLOSE</button>
+    <a class="logo" href={homeHref}>{SITE.logoText}</a>
+    <button type="button" data-menu-close aria-label={text.closeMenu}>CLOSE</button>
   </div>
 
-  <nav aria-label="移动端主导航">
+  <nav aria-label={text.mobileNavLabel}>
     {nav.map((item) => (
       <a class:list={['menu-link', { active: active === item.id }]} href={item.href} aria-current={active === item.id ? 'page' : undefined}>
         <Icon name={item.icon} size={26} />
@@ -38,12 +43,12 @@ const nav = [
 
   <section class="menu-now">
     <h2>NOW</h2>
-    {CURRENT_STATUS.map((item) => <p><span class:list={['status-dot', { 'is-current': item.current }]}></span>{item.text}</p>)}
+    {status.map((item) => <p><span class:list={['status-dot', { 'is-current': item.current }]}></span>{item.text}</p>)}
   </section>
 
   <footer>
-    <div><a href={`mailto:${SITE.contact.email}`}>Email</a><a href={SITE.contact.githubUrl}>GitHub</a><a href={SITE.contact.extraLink.url}>{SITE.contact.extraLink.label}</a><a href="/rss.xml">RSS</a></div>
-    <p>最后更新 {DISPLAY_UPDATED_AT}</p>
+    <div><a href={`mailto:${SITE.contact.email}`}>Email</a><a href={SITE.contact.githubUrl}>GitHub</a><a href={SITE.contact.extraLink.url}>{SITE.contact.extraLink.label}</a><a href={rssHref}>RSS</a></div>
+    <p>{text.updated} {DISPLAY_UPDATED_AT}</p>
   </footer>
 </dialog>
 
@@ -93,6 +98,10 @@ const nav = [
     font-size: 0.82rem;
     cursor: pointer;
   }
+
+  .header-actions { display: flex; align-items: center; gap: 1.25rem; }
+  .mobile-language { color: var(--color-muted); font-family: var(--font-mono); font-size: 0.76rem; }
+  .mobile-language:hover { color: var(--color-accent); }
 
   @media (max-width: 900px) {
     .mobile-header {

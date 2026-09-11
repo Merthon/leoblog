@@ -1,59 +1,60 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-import SectionHeading from '../components/ui/SectionHeading.astro';
-import Icon from '../components/ui/Icon.astro';
-import { formatDate, getProjects, getPublishedWriting, getReadingNotes } from '../lib/content';
-import { CURRENT_STATUS, SITE } from '../config/site';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SectionHeading from '../../components/ui/SectionHeading.astro';
+import Icon from '../../components/ui/Icon.astro';
+import { formatDateEn, getProjectsEn, getPublishedWritingEn } from '../../lib/content';
+import { CURRENT_STATUS_EN, SITE, SITE_EN } from '../../config/site';
 
-const [writing, reading, projects] = await Promise.all([
-  getPublishedWriting(),
-  getReadingNotes(),
-  getProjects(),
-]);
-
+const [writing, projects] = await Promise.all([getPublishedWritingEn(), getProjectsEn()]);
 const featured = writing.find((entry) => entry.data.featured) ?? writing[0];
-const recentReading = reading[0];
 const recentProject = projects.find((entry) => entry.id === 'leo-log') ?? projects[0];
 const recent = [
   ...writing.map((entry) => ({
-    type: entry.data.type === 'essay' ? '随笔' : '文章',
+    type: entry.data.type === 'essay' ? 'Essay' : 'Article',
     title: entry.data.title,
-    href: `/writing/${entry.id}/`,
+    href: `/en/writing/${entry.id}/`,
     date: entry.data.publishedAt,
     icon: 'writing' as const,
   })),
-  ...reading.map((entry) => ({
-    type: '阅读',
-    title: entry.data.title,
-    href: `/reading/${entry.id}/`,
-    date: entry.data.publishedAt,
-    icon: 'reading' as const,
-  })),
   ...projects.map((entry) => ({
-    type: '项目',
+    type: 'Project',
     title: entry.data.title,
-    href: `/projects/${entry.id}/`,
+    href: `/en/projects/${entry.id}/`,
     date: entry.data.updatedAt,
     icon: 'projects' as const,
   })),
+  {
+    type: 'Now',
+    title: 'What I am working on now',
+    href: '/en/now/',
+    date: new Date(SITE.now.updatedAt),
+    icon: 'now' as const,
+  },
 ].sort((a, b) => b.date.valueOf() - a.date.valueOf()).slice(0, 5);
 ---
 
-<BaseLayout title={SITE.displayName} description={SITE.description} active="index" languageHref="/en/" alternatePath="/en/">
+<BaseLayout
+  title={SITE.displayName}
+  description={SITE_EN.description}
+  active="index"
+  locale="en"
+  languageHref="/"
+  alternatePath="/"
+>
   <div class="page-content home">
     <section class="feature">
-      <div class="feature-label"><span>最近在想</span><span>一段正在形成的判断</span></div>
-      <h1><a href={`/writing/${featured.id}/`}>{featured.data.title}</a></h1>
+      <div class="feature-label"><span>On my mind</span><span>A judgment still taking shape</span></div>
+      <h1><a href={`/en/writing/${featured.id}/`}>{featured.data.title}</a></h1>
       <p>{featured.data.description}</p>
-      <time class="mono" datetime={featured.data.publishedAt.toISOString()}>{formatDate(featured.data.publishedAt)}</time>
+      <time class="mono" datetime={featured.data.publishedAt.toISOString()}>{formatDateEn(featured.data.publishedAt)}</time>
     </section>
 
     <section class="updates">
-      <SectionHeading title="最近更新" accent />
+      <SectionHeading title="Recent updates" accent />
       <div class="update-list">
         {recent.map((item, index) => (
           <a class="update-row" href={item.href}>
-            <time class="mono" datetime={item.date.toISOString()}>{formatDate(item.date)}</time>
+            <time class="mono" datetime={item.date.toISOString()}>{formatDateEn(item.date)}</time>
             <Icon name={item.icon} size={20} />
             <strong>{item.title}</strong>
             <span class:list={['update-type', { current: index === 0 }]}><span class:list={['status-dot', { 'is-current': index === 0 }]}></span>{item.type}</span>
@@ -63,28 +64,20 @@ const recent = [
       </div>
     </section>
 
-    {recentReading && recentProject && (
+    {recentProject && (
       <section class="connections">
-        <SectionHeading title="内容之间" accent />
+        <SectionHeading title="From notes to software" accent />
         <div class="connection-flow">
-          <a href={`/reading/${recentReading.id}/`}>
-            <span>阅读启发</span>
-            <strong>{recentReading.data.title}</strong>
-          </a>
+          <a href={`/en/writing/${featured.id}/`}><span>Working idea</span><strong>{featured.data.title}</strong></a>
           <span class="flow-arrow" aria-hidden="true">··············································→</span>
-          <a href={`/projects/${recentProject.id}/`}>
-            <span>项目实践</span>
-            <strong>{recentProject.data.title}</strong>
-          </a>
+          <a href={`/en/projects/${recentProject.id}/`}><span>Project practice</span><strong>{recentProject.data.title}</strong></a>
         </div>
       </section>
     )}
 
     <section class="mobile-now">
       <SectionHeading title="NOW" accent />
-      <ul>
-        {CURRENT_STATUS.map((item) => <li><span class:list={['status-dot', { 'is-current': item.current }]}></span>{item.text}</li>)}
-      </ul>
+      <ul>{CURRENT_STATUS_EN.map((item) => <li><span class:list={['status-dot', { 'is-current': item.current }]}></span>{item.text}</li>)}</ul>
     </section>
   </div>
 </BaseLayout>
@@ -114,7 +107,6 @@ const recent = [
   .connection-flow strong { font-size: 0.92rem; }
   .flow-arrow { overflow: hidden; color: var(--color-accent) !important; font-family: var(--font-mono); white-space: nowrap; }
   .mobile-now { display: none; }
-
   @media (max-width: 900px) {
     .feature { padding-bottom: 2rem; }
     .feature-label { gap: 1rem; margin-bottom: 1.75rem; }

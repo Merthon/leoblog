@@ -7,6 +7,7 @@ tags: ["AI", "智能体", "随笔"]
 draft: false
 featured: false
 readingMinutes: 2
+translationKey: ai-agents-take-over-work
 ---
 
 我以前使用 AI，习惯把任务切成很小的问答：解释一个报错、补一段函数、比较两个方案。对话结束，工作还是留在我手里。

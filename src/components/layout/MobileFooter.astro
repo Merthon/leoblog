@@ -1,12 +1,17 @@
 ---
 import { SITE } from '../../config/site';
+import type { SiteLocale } from '../../i18n/ui';
+
+interface Props { locale?: SiteLocale }
+const { locale = 'zh-CN' } = Astro.props;
+const rssHref = locale === 'en' ? '/en/rss.xml' : '/rss.xml';
 ---
 
 <footer class="mobile-footer">
   <a href={`mailto:${SITE.contact.email}`}>Email</a>
   <a href={SITE.contact.githubUrl}>GitHub</a>
   <a href={SITE.contact.extraLink.url}>{SITE.contact.extraLink.label}</a>
-  <a href="/rss.xml">RSS</a>
+  <a href={rssHref}>RSS</a>
 </footer>
 
 <style>

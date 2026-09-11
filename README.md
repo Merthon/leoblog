@@ -31,9 +31,11 @@ pnpm preview # 预览静态产物
 
 ```text
 src/content/
-├── writing/  # 技术文章、思考与随笔
-├── reading/  # 读书笔记
-└── projects/ # 项目记录
+├── writing/     # 中文技术文章、思考与随笔
+├── writing-en/  # 精选英文文章
+├── reading/     # 读书笔记
+├── projects/    # 中文项目记录
+└── projects-en/ # 英文项目记录
 ```
 
 新增内容时复制同类 Markdown 文件，并填写 frontmatter。内容模型定义在 `src/content.config.ts`。
@@ -43,6 +45,12 @@ src/content/
 ```yaml
 relatedReadings: [philosophy-of-software-design]
 relatedProjects: [leo-log]
+```
+
+中英文内容使用稳定的 `translationKey` 建立对应关系。中文页面保持原有 URL，英文页面统一位于 `/en/` 下：
+
+```yaml
+translationKey: gpt-6-astra-first-look
 ```
 
 ## 设计稿

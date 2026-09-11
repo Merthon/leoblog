@@ -11,6 +11,7 @@ decisions: [内容优先, 静态生成, 保持可迁移]
 featured: true
 relatedWriting: []
 relatedReadings: []
+translationKey: leo-log
 ---
 
 leoblog 是这个网站本身，也是一次关于长期维护的实践。

@@ -1,0 +1,20 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import SectionHeading from '../../../components/ui/SectionHeading.astro';
+---
+
+<BaseLayout title="Reading notes" description="Reading is not collecting titles. It is keeping the ideas that changed my judgment." active="reading" locale="en" languageHref="/reading/" alternatePath="/reading/">
+  <div class="page-content">
+    <h1 class="page-title">Reading notes</h1>
+    <p class="page-description">Reading is not collecting titles. It is keeping the ideas that changed my judgment.</p>
+    <section class="notes-index">
+      <SectionHeading title="Notes index" />
+      <p class="empty-state">No reading notes have been published in English yet.</p>
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  .notes-index { padding-top: 1.5rem; border-top: 1px solid var(--color-line); }
+  .empty-state { padding: 0.5rem 0 1.5rem; margin: 0; color: var(--color-muted); }
+</style>

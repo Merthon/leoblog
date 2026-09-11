@@ -1,31 +1,27 @@
 ---
 import { render, type CollectionEntry } from 'astro:content';
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import RelatedContent from '../../components/content/RelatedContent.astro';
-import { formatDate, getProjects, getProjectsEn, getPublishedWriting, getReadingNotes, projectStatusLabels } from '../../lib/content';
-import '../../styles/content.css';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import RelatedContent from '../../../components/content/RelatedContent.astro';
+import { formatDateEn, getProjects, getProjectsEn, getPublishedWritingEn, projectStatusLabelsEn } from '../../../lib/content';
+import '../../../styles/content.css';
 
 export async function getStaticPaths() {
-  const entries = await getProjects();
+  const entries = await getProjectsEn();
   return entries.map((project) => ({ params: { slug: project.id }, props: { project } }));
 }
 
-interface Props { project: CollectionEntry<'projects'> }
+interface Props { project: CollectionEntry<'projectsEn'> }
 const { project } = Astro.props;
 const { Content } = await render(project);
-const [writing, readings, englishProjects] = await Promise.all([getPublishedWriting(), getReadingNotes(), getProjectsEn()]);
+const [writing, chineseProjects] = await Promise.all([getPublishedWritingEn(), getProjects()]);
 const translation = project.data.translationKey
-  ? englishProjects.find((entry) => entry.data.translationKey === project.data.translationKey)
+  ? chineseProjects.find((entry) => entry.data.translationKey === project.data.translationKey)
   : undefined;
-const englishHref = translation ? `/en/projects/${translation.id}/` : '/en/projects/';
+const chineseHref = translation ? `/projects/${translation.id}/` : '/projects/';
 const related = [
   ...project.data.relatedWriting.map((id) => {
     const entry = writing.find((item) => item.id === id);
-    return entry && { label: '相关文章', title: entry.data.title, href: `/writing/${entry.id}/` };
-  }),
-  ...project.data.relatedReadings.map((id) => {
-    const entry = readings.find((item) => item.id === id);
-    return entry && { label: '阅读笔记', title: entry.data.title, href: `/reading/${entry.id}/` };
+    return entry && { label: 'Related article', title: entry.data.title, href: `/en/writing/${entry.id}/` };
   }),
 ].filter((item): item is NonNullable<typeof item> => Boolean(item));
 ---
@@ -34,20 +30,21 @@ const related = [
   title={project.data.title}
   description={project.data.description}
   active="projects"
-  languageHref={englishHref}
-  alternatePath={translation ? englishHref : undefined}
+  locale="en"
+  languageHref={chineseHref}
+  alternatePath={translation ? chineseHref : undefined}
 >
   <article class="page-content project-detail">
     <header>
-      <div class="project-status">{projectStatusLabels[project.data.status]}</div>
+      <div class="project-status">{projectStatusLabelsEn[project.data.status]}</div>
       <h1>{project.data.title}</h1>
       <p class="description">{project.data.description}</p>
       <p class="stack mono">{project.data.stack.join(' / ')}</p>
-      {project.data.repository && <a class="repository" href={project.data.repository}>查看 GitHub 仓库 →</a>}
-      <div class="facts"><div><span>问题</span><strong>{project.data.problem}</strong></div><div><span>关键取舍</span><strong>{project.data.decisions.join(' · ')}</strong></div><div><span>最后更新</span><strong>{formatDate(project.data.updatedAt)}</strong></div></div>
+      {project.data.repository && <a class="repository" href={project.data.repository}>View on GitHub →</a>}
+      <div class="facts"><div><span>Problem</span><strong>{project.data.problem}</strong></div><div><span>Key decisions</span><strong>{project.data.decisions.join(' · ')}</strong></div><div><span>Last updated</span><strong>{formatDateEn(project.data.updatedAt)}</strong></div></div>
     </header>
     <div class="prose" data-pagefind-body><Content /></div>
-    <RelatedContent items={related} />
+    <RelatedContent items={related} title="Related content" />
   </article>
 </BaseLayout>
 

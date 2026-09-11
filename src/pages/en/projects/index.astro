@@ -1,31 +1,31 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import ProjectRow from '../../components/content/ProjectRow.astro';
-import SectionHeading from '../../components/ui/SectionHeading.astro';
-import { getProjects } from '../../lib/content';
-import { SITE } from '../../config/site';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import ProjectRow from '../../../components/content/ProjectRow.astro';
+import SectionHeading from '../../../components/ui/SectionHeading.astro';
+import { getProjectsEn } from '../../../lib/content';
+import { SITE_EN } from '../../../config/site';
 
-const projects = await getProjects();
+const projects = await getProjectsEn();
 const featured = projects.find((entry) => entry.data.featured) ?? projects[0];
 ---
 
-<BaseLayout title="项目" description="把想法做成可以运行、可以验证的东西。" active="projects" languageHref="/en/projects/" alternatePath="/en/projects/">
+<BaseLayout title="Projects" description="Turning ideas into things that can run and be tested." active="projects" locale="en" languageHref="/projects/" alternatePath="/projects/">
   <div class="page-content">
-    <h1 class="page-title">项目</h1>
-    <p class="page-description">把想法做成可以运行、可以验证的东西。</p>
+    <h1 class="page-title">Projects</h1>
+    <p class="page-description">Turning ideas into things that can run and be tested.</p>
     <section class="featured-project">
-      <span class="project-state">{SITE.project.status}</span>
-      <h2><a href={`/projects/${featured.id}/`}>{featured.data.title}</a></h2>
+      <span class="project-state">{SITE_EN.project.status}</span>
+      <h2><a href={`/en/projects/${featured.id}/`}>{featured.data.title}</a></h2>
       <div class="project-facts">
-        <div><h3>问题</h3><p>{featured.data.problem}</p><p class="stack mono">{featured.data.stack.join(' / ')}</p></div>
-        <div><h3>关键取舍</h3><ul>{featured.data.decisions.map((decision) => <li>{decision}</li>)}</ul></div>
-        <div><h3>当前状态</h3><p>持续整理内容与打磨阅读体验。</p></div>
+        <div><h3>Problem</h3><p>{featured.data.problem}</p><p class="stack mono">{featured.data.stack.join(' / ')}</p></div>
+        <div><h3>Key decisions</h3><ul>{featured.data.decisions.map((decision) => <li>{decision}</li>)}</ul></div>
+        <div><h3>Current state</h3><p>Continuing to refine the content and reading experience.</p></div>
       </div>
     </section>
     <section class="projects-index">
-      <SectionHeading title="项目索引" />
-      <div class="column-headings" aria-hidden="true"><span>项目</span><span>解决什么问题</span><span>技术栈</span><span>状态</span><span>最后更新</span><span></span></div>
-      <div class="project-list">{projects.map((entry) => <ProjectRow entry={entry} />)}</div>
+      <SectionHeading title="Project index" />
+      <div class="column-headings" aria-hidden="true"><span>Project</span><span>Problem</span><span>Stack</span><span>Status</span><span>Updated</span><span></span></div>
+      <div class="project-list">{projects.map((entry) => <ProjectRow entry={entry} locale="en" />)}</div>
     </section>
   </div>
 </BaseLayout>

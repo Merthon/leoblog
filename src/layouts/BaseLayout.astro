@@ -11,6 +11,7 @@ import SiteSidebar from '../components/layout/SiteSidebar.astro';
 import MobileHeader from '../components/layout/MobileHeader.astro';
 import MobileFooter from '../components/layout/MobileFooter.astro';
 import { SITE, SITE_TITLE } from '../config/site';
+import { layoutText, type SiteLocale } from '../i18n/ui';
 
 interface Props {
   title: string;
@@ -18,6 +19,9 @@ interface Props {
   active: 'index' | 'writing' | 'reading' | 'projects' | 'now';
   image?: string;
   article?: boolean;
+  locale?: SiteLocale;
+  languageHref?: string;
+  alternatePath?: string;
 }
 
 const {
@@ -26,14 +30,30 @@ const {
   active,
   image = '/og-default.png',
   article = false,
+  locale = 'zh-CN',
+  languageHref,
+  alternatePath,
 } = Astro.props;
 
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin);
 const fullTitle = title === SITE.displayName ? SITE_TITLE : `${title} · ${SITE.displayName}`;
+const text = layoutText[locale];
+const isEnglish = locale === 'en';
+const sectionFallback = Astro.url.pathname.startsWith('/writing/')
+  ? '/en/writing/'
+  : Astro.url.pathname.startsWith('/reading/')
+    ? '/en/reading/'
+    : Astro.url.pathname.startsWith('/projects/')
+      ? '/en/projects/'
+      : '/en/';
+const resolvedLanguageHref = languageHref ?? (isEnglish ? '/' : sectionFallback);
+const alternate = alternatePath ? new URL(alternatePath, Astro.site ?? Astro.url.origin) : undefined;
+const chineseUrl = isEnglish ? alternate : canonical;
+const englishUrl = isEnglish ? canonical : alternate;
 ---
 
 <!doctype html>
-<html lang={SITE.locale}>
+<html lang={locale}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
@@ -41,26 +61,34 @@ const fullTitle = title === SITE.displayName ? SITE_TITLE : `${title} · ${SITE.
     <meta name="description" content={description} />
     <meta name="theme-color" content="#ffffff" />
     <link rel="canonical" href={canonical} />
+    {alternate && (
+      <>
+        <link rel="alternate" hreflang="zh-CN" href={chineseUrl} />
+        <link rel="alternate" hreflang="en" href={englishUrl} />
+        <link rel="alternate" hreflang="x-default" href={chineseUrl} />
+      </>
+    )}
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <link rel="alternate" type="application/rss+xml" title={SITE_TITLE} href="/rss.xml" />
+    <link rel="alternate" type="application/rss+xml" title={SITE_TITLE} href={isEnglish ? '/en/rss.xml' : '/rss.xml'} />
     <meta property="og:type" content={article ? 'article' : 'website'} />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={new URL(image, Astro.site ?? Astro.url.origin)} />
+    <meta property="og:locale" content={locale === 'en' ? 'en_US' : 'zh_CN'} />
     <meta name="twitter:card" content="summary_large_image" />
     <title>{fullTitle}</title>
   </head>
   <body>
-    <a class="skip-link" href="#main-content">跳到正文</a>
-    <SiteSidebar active={active} />
-    <MobileHeader active={active} />
+    <a class="skip-link" href="#main-content">{text.skip}</a>
+    <SiteSidebar active={active} locale={locale} languageHref={resolvedLanguageHref} />
+    <MobileHeader active={active} locale={locale} languageHref={resolvedLanguageHref} />
     <div class="page-shell">
       <main class="page-main" id="main-content">
         <slot />
       </main>
-      <MobileFooter />
+      <MobileFooter locale={locale} />
     </div>
   </body>
 </html>

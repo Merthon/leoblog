@@ -6,6 +6,7 @@ type: essay
 tags: ["AI", "安全", "随笔"]
 draft: false
 readingMinutes: 2
+translationKey: can-ai-supervise-ai
 ---
 
 AI 能写代码以后，一个自然的想法是让它改进 AI；当模型能力继续增长，又会出现下一层问题：能不能让 AI 检查和约束另一个 AI？

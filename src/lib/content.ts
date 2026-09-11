@@ -1,13 +1,21 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
 
 export type WritingEntry = CollectionEntry<'writing'>;
+export type WritingEnEntry = CollectionEntry<'writingEn'>;
 export type ReadingEntry = CollectionEntry<'reading'>;
 export type ProjectEntry = CollectionEntry<'projects'>;
+export type ProjectEnEntry = CollectionEntry<'projectsEn'>;
 
 export const writingTypeLabels = {
   technical: '技术',
   thinking: '思考',
   essay: '随笔',
+} as const;
+
+export const writingTypeLabelsEn = {
+  technical: 'Technical',
+  thinking: 'Thinking',
+  essay: 'Essay',
 } as const;
 
 export const projectStatusLabels = {
@@ -17,8 +25,20 @@ export const projectStatusLabels = {
   archived: '归档',
 } as const;
 
+export const projectStatusLabelsEn = {
+  building: 'Building',
+  maintaining: 'Maintaining',
+  completed: 'Completed',
+  archived: 'Archived',
+} as const;
+
 export async function getPublishedWriting() {
   const entries = await getCollection('writing', ({ data }) => !data.draft);
+  return entries.sort((a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf());
+}
+
+export async function getPublishedWritingEn() {
+  const entries = await getCollection('writingEn', ({ data }) => !data.draft);
   return entries.sort((a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf());
 }
 
@@ -32,8 +52,21 @@ export async function getProjects() {
   return entries.sort((a, b) => b.data.updatedAt.valueOf() - a.data.updatedAt.valueOf());
 }
 
+export async function getProjectsEn() {
+  const entries = await getCollection('projectsEn');
+  return entries.sort((a, b) => b.data.updatedAt.valueOf() - a.data.updatedAt.valueOf());
+}
+
 export function formatDate(date: Date, full = true) {
   return new Intl.DateTimeFormat('zh-CN', {
+    year: full ? 'numeric' : undefined,
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date).replaceAll('/', '.');
+}
+
+export function formatDateEn(date: Date, full = true) {
+  return new Intl.DateTimeFormat('en-GB', {
     year: full ? 'numeric' : undefined,
     month: '2-digit',
     day: '2-digit',

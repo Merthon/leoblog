@@ -1,18 +1,21 @@
 ---
 import Icon from '../ui/Icon.astro';
-import { formatDate, isCurrentProject, projectStatusLabels, type ProjectEntry } from '../../lib/content';
+import { formatDate, formatDateEn, isCurrentProject, projectStatusLabels, projectStatusLabelsEn, type ProjectEntry, type ProjectEnEntry } from '../../lib/content';
+import type { SiteLocale } from '../../i18n/ui';
 
-interface Props { entry: ProjectEntry }
-const { entry } = Astro.props;
+interface Props { entry: ProjectEntry | ProjectEnEntry; locale?: SiteLocale }
+const { entry, locale = 'zh-CN' } = Astro.props;
+const isEnglish = locale === 'en';
 const current = isCurrentProject(entry.data.status);
+const href = `${isEnglish ? '/en' : ''}/projects/${entry.id}/`;
 ---
 
-<a class="project-row" href={`/projects/${entry.id}/`}>
+<a class="project-row" href={href}>
   <h3>{entry.data.title}</h3>
   <p>{entry.data.description}</p>
   <span class="stack mono">{entry.data.stack.join(' / ')}</span>
-  <span class="status"><span class:list={['status-dot', { 'is-current': current }]}></span>{projectStatusLabels[entry.data.status]}</span>
-  <time class="mono" datetime={entry.data.updatedAt.toISOString()}>{formatDate(entry.data.updatedAt)}</time>
+  <span class="status"><span class:list={['status-dot', { 'is-current': current }]}></span>{isEnglish ? projectStatusLabelsEn[entry.data.status] : projectStatusLabels[entry.data.status]}</span>
+  <time class="mono" datetime={entry.data.updatedAt.toISOString()}>{isEnglish ? formatDateEn(entry.data.updatedAt) : formatDate(entry.data.updatedAt)}</time>
   <span class="arrow"><Icon name="arrow" size={17} /></span>
 </a>
 

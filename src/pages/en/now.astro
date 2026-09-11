@@ -1,14 +1,14 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-import { DISPLAY_UPDATED_AT, SITE } from '../config/site';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { DISPLAY_UPDATED_AT, SITE, SITE_EN } from '../../config/site';
 ---
 
-<BaseLayout title="现在" description={`${SITE.displayName} 最近正在做和正在思考的事情。`} active="now" languageHref="/en/now/" alternatePath="/en/now/">
+<BaseLayout title="Now" description={`What ${SITE.displayName} is working on and thinking about now.`} active="now" locale="en" languageHref="/now/" alternatePath="/now/">
   <div class="page-content now-page">
     <header class="now-header">
       <div>
-        <h1 class="page-title">现在</h1>
-        <p class="updated mono">更新于 {DISPLAY_UPDATED_AT}</p>
+        <h1 class="page-title">Now</h1>
+        <p class="updated mono">Updated {DISPLAY_UPDATED_AT}</p>
       </div>
       <figure class="portrait-stamp">
         <div class="portrait-frame">
@@ -16,7 +16,7 @@ import { DISPLAY_UPDATED_AT, SITE } from '../config/site';
             src="/images/leo-288.webp"
             srcset="/images/leo-176.webp 176w, /images/leo-288.webp 288w"
             sizes="(max-width: 900px) 88px, 144px"
-            alt={`${SITE.displayName} 的个人头像`}
+            alt={`Portrait of ${SITE.displayName}`}
             width="144"
             height="144"
             loading="eager"
@@ -29,29 +29,29 @@ import { DISPLAY_UPDATED_AT, SITE } from '../config/site';
     </header>
     <div class="now-grid">
       <section class="intro">
-        <h2>你好，我是 {SITE.displayName}，一名{SITE.role}。</h2>
-        <p>{SITE.intro}</p>
-        <div class="subsection"><h3>目前关注</h3><ul>{SITE.now.focuses.map((item) => <li>{item}</li>)}</ul></div>
+        <h2>Hello, I’m {SITE.displayName}, a {SITE_EN.role}.</h2>
+        <p>{SITE_EN.intro}</p>
+        <div class="subsection"><h3>Current focus</h3><ul>{SITE_EN.now.focuses.map((item) => <li>{item}</li>)}</ul></div>
       </section>
       <section class="current">
-        <div><h3>正在做</h3><ul>{SITE.now.doing.map((item, index) => <li class:list={{ active: index === 0 }}>{item}</li>)}</ul></div>
-        {SITE.now.reading.length > 0 && <div><h3>正在读</h3><ul>{SITE.now.reading.map((item) => <li>{item}</li>)}</ul></div>}
-        <div><h3>近期计划</h3><ul>{SITE.now.plans.map((item) => <li>{item}</li>)}</ul></div>
+        <div><h3>Working on</h3><ul>{SITE_EN.now.doing.map((item, index) => <li class:list={{ active: index === 0 }}>{item}</li>)}</ul></div>
+        {SITE_EN.now.reading.length > 0 && <div><h3>Reading</h3><ul>{SITE_EN.now.reading.map((item) => <li>{item}</li>)}</ul></div>}
+        <div><h3>Next</h3><ul>{SITE_EN.now.plans.map((item) => <li>{item}</li>)}</ul></div>
       </section>
     </div>
     <div class="about-grid">
       <section>
-        <h3>关于这个网站</h3>
-        <p>{SITE.now.aboutSite}</p>
-        <div class="principles"><h3>维护原则</h3><ul>{SITE.now.principles.map((item) => <li>{item}</li>)}</ul></div>
+        <h3>About this site</h3>
+        <p>{SITE_EN.now.aboutSite}</p>
+        <div class="principles"><h3>Principles</h3><ul>{SITE_EN.now.principles.map((item) => <li>{item}</li>)}</ul></div>
       </section>
       <section class="contact">
-        <h3>联系我</h3>
+        <h3>Contact</h3>
         <dl>
           <dt>Email</dt><dd><a href={`mailto:${SITE.contact.email}`}>{SITE.contact.email}</a></dd>
           <dt>GitHub</dt><dd><a href={SITE.contact.githubUrl}>github.com/{SITE.contact.githubUsername}</a></dd>
           <dt>{SITE.contact.extraLink.label}</dt><dd><a href={SITE.contact.extraLink.url}>{SITE.contact.extraLink.url.replace('https://', '')}</a></dd>
-          <dt>RSS</dt><dd><a href="/rss.xml">/rss.xml</a></dd>
+          <dt>RSS</dt><dd><a href="/en/rss.xml">/en/rss.xml</a></dd>
         </dl>
       </section>
     </div>
