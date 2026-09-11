@@ -5,7 +5,7 @@ publishedAt: 2026-09-04
 type: essay
 tags: ["AI", "智能体", "随笔"]
 draft: false
-featured: true
+featured: false
 readingMinutes: 2
 ---
 
