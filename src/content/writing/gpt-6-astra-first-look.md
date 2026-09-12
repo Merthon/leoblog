@@ -5,7 +5,7 @@ publishedAt: 2026-09-11
 type: technical
 tags: ["AI", "OpenAI", "智能体"]
 draft: false
-featured: true
+featured: false
 readingMinutes: 3
 translationKey: gpt-6-astra-first-look
 ---
