@@ -5,7 +5,7 @@ publishedAt: 2026-09-12
 type: technical
 tags: ["AI", "Python", "TypeScript", "Engineering"]
 draft: false
-featured: true
+featured: false
 readingMinutes: 5
 translationKey: best-programming-language-for-ai-development
 ---
