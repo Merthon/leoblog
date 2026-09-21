@@ -5,7 +5,7 @@ publishedAt: 2026-09-17
 type: essay
 tags: ["AI", "OpenAI", "GPT", "随笔"]
 draft: false
-featured: true
+featured: false
 readingMinutes: 4
 translationKey: where-gpt-goes-next-and-gpt-6-5
 ---
