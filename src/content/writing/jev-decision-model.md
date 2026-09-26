@@ -5,7 +5,7 @@ publishedAt: 2026-09-21
 type: technical
 tags: ["AI", "Jev", "智能体", "工程实践"]
 draft: false
-featured: true
+featured: false
 readingMinutes: 5
 translationKey: jev-decision-model
 ---
