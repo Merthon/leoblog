@@ -5,7 +5,7 @@ publishedAt: 2026-10-19
 type: technical
 tags: ["AI Coding", "Spec Kit", "SDD", "Codex"]
 draft: false
-featured: true
+featured: false
 readingMinutes: 8
 translationKey: spec-kit-notes
 ---
