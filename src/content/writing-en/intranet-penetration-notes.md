@@ -5,7 +5,7 @@ publishedAt: 2026-09-26
 type: technical
 tags: ["Networking", "Tunneling", "FRP", "Tailscale", "Cloudflare"]
 draft: false
-featured: true
+featured: false
 readingMinutes: 8
 translationKey: intranet-penetration-notes
 ---

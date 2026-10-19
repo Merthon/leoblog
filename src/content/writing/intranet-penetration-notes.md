@@ -5,7 +5,7 @@ publishedAt: 2026-09-26
 type: technical
 tags: ["网络", "内网穿透", "FRP", "Tailscale", "Cloudflare"]
 draft: false
-featured: true
+featured: false
 readingMinutes: 7
 translationKey: intranet-penetration-notes
 ---
